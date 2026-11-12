@@ -1,0 +1,22 @@
+{
+  "name": "a-seat-to-study",
+  "version": "1.0.0",
+  "description": "A Seat to Study - Library Seat Reservation Platform",
+  "private": true,
+  "scripts": {
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "npm --prefix backend run dev",
+    "start:backend": "npm --prefix backend start",
+    "test:backend": "npm --prefix backend test",
+    "build:frontend": "npm --prefix frontend run build"
+  },
+  "keywords": [
+    "library",
+    "seat-reservation",
+    "study",
+    "mern"
+  ],
+  "author": "",
+  "license": "ISC"
+}
+
