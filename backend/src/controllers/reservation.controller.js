@@ -8,7 +8,7 @@ export const mockReservations = [
     id: 'mock-res-001',
     reservationCode: 'PASS-LPU-12513583-B07',
     userId: 'mock-user-ankit-001',
-    userName: 'Ankit',
+    userName: 'Ankit Singh Rathore',
     studentId: '12513583',
     seatNumber: 'B07',
     deskCode: '#AT-207',
@@ -38,7 +38,7 @@ export const mockReservations = [
     id: 'mock-res-002',
     reservationCode: 'PASS-LPU-12513583-A14',
     userId: 'mock-user-ankit-001',
-    userName: 'Ankit',
+    userName: 'Ankit Singh Rathore',
     studentId: '12513583',
     seatNumber: 'A14',
     deskCode: '#A-14',
@@ -61,7 +61,7 @@ export const mockReservations = [
     id: 'mock-res-003',
     reservationCode: 'PASS-LPU-12513583-D04',
     userId: 'mock-user-ankit-001',
-    userName: 'Ankit',
+    userName: 'Ankit Singh Rathore',
     studentId: '12513583',
     seatNumber: 'D04',
     deskCode: '#D-04',
@@ -84,7 +84,7 @@ export const mockReservations = [
     id: 'mock-res-004',
     reservationCode: 'PASS-LPU-12513583-C02',
     userId: 'mock-user-ankit-001',
-    userName: 'Ankit',
+    userName: 'Ankit Singh Rathore',
     studentId: '12513583',
     seatNumber: 'C02',
     deskCode: '#C-02',
@@ -106,7 +106,7 @@ export const mockReservations = [
     id: 'mock-res-005',
     reservationCode: 'PASS-LPU-12513583-B03',
     userId: 'mock-user-ankit-001',
-    userName: 'Ankit',
+    userName: 'Ankit Singh Rathore',
     studentId: '12513583',
     seatNumber: 'B03',
     deskCode: '#AT-203',
@@ -147,7 +147,7 @@ export const createReservation = async (req, res, next) => {
     const user = req.user || {
       id: 'mock-user-ankit-001',
       _id: 'mock-user-ankit-001',
-      name: 'Ankit',
+      name: 'Ankit Singh Rathore',
       studentId: '12513583',
     };
 
@@ -251,7 +251,7 @@ export const createReservation = async (req, res, next) => {
       id: `mock-res-${Date.now()}`,
       reservationCode,
       userId: user.id || user._id,
-      userName: user.name || 'Ankit',
+      userName: user.name || 'Ankit Singh Rathore',
       studentId: user.studentId || '12513583',
       seatNumber,
       deskCode: `#AT-${seatNumber.slice(1)}`,
@@ -643,7 +643,7 @@ export const getStudentAnalytics = async (req, res, next) => {
   try {
     const user = req.user || {
       id: 'mock-user-ankit-001',
-      name: 'Ankit',
+      name: 'Ankit Singh Rathore',
       studentId: '12513583',
       department: 'Lovely Professional University — School of Computer Science & Engineering',
       weeklyQuotaHours: 25.0,
@@ -701,7 +701,7 @@ export const getStudentAnalytics = async (req, res, next) => {
     const analyticsData = {
       student: {
         id: user.studentId || '12513583',
-        name: user.name || 'Ankit',
+        name: user.name || 'Ankit Singh Rathore',
         department: user.department || 'Lovely Professional University — School of Computer Science & Engineering',
         honorTier: "Dean's Honor Tier",
         reliabilityScore: 100,

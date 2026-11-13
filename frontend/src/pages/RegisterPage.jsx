@@ -5,7 +5,7 @@ export const RegisterPage = ({ onNavigate, onRegisterSuccess }) => {
   const { register, error, clearError } = useAuth();
 
   const [formData, setFormData] = useState({
-    name: 'Ankit',
+    name: 'Ankit Singh Rathore',
     studentId: '12513583',
     email: 'ankit@lpu.in',
     department: 'Lovely Professional University — School of Computer Science & Engineering',
@@ -254,11 +254,13 @@ export const RegisterPage = ({ onNavigate, onRegisterSuccess }) => {
               {/* Bottom Testimonial */}
               <div className="relative z-10 p-space-lg bg-primary/70 backdrop-blur-md mt-space-md space-y-space-sm">
                 <div className="flex items-center gap-space-sm">
-                  <div className="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden shrink-0 flex items-center justify-center">
-                    <span className="material-symbols-outlined text-primary text-[24px]">school</span>
-                  </div>
+                  <img
+                    src="/assets/ankit-singh-rathore.jpg"
+                    alt="Ankit Singh Rathore"
+                    className="w-11 h-11 rounded-full object-cover border-2 border-secondary shadow-sm shrink-0"
+                  />
                   <div>
-                    <p className="font-title-md text-title-md text-on-primary font-semibold">Ankit</p>
+                    <p className="font-title-md text-title-md text-on-primary font-semibold">Ankit Singh Rathore</p>
                     <p className="font-body-sm text-body-sm text-surface-container-high">Lovely Professional University • B.Tech CSE • ID: 12513583</p>
                   </div>
                 </div>
@@ -312,7 +314,7 @@ export const RegisterPage = ({ onNavigate, onRegisterSuccess }) => {
                         required
                         value={formData.name}
                         onChange={handleChange}
-                        placeholder="Ankit"
+                        placeholder="Ankit Singh Rathore"
                         className="w-full h-11 pl-11 pr-space-md bg-surface rounded-lg font-body-md text-body-md text-on-surface placeholder:text-outline focus:outline-none focus:bg-surface-container-lowest focus:ring-2 focus:ring-secondary-container shadow-xs"
                       />
                     </div>

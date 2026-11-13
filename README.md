@@ -206,5 +206,5 @@ npm --prefix frontend run build
 ## 📄 License & Credits
 - **Designed for**: College Capstone & Engineering Portfolio.
 - **Design Origin**: Google Stitch Project — *Library Seat Reservation Platform*.
-- **Author**: Ankit (Student ID: 12513583) • Lovely Professional University (LPU).
+- **Author**: Ankit Singh Rathore (Student ID: 12513583) • Lovely Professional University (LPU).
 - **License**: MIT Open Source.

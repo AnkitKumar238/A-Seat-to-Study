@@ -16,7 +16,7 @@ export const SeatBookingPage = ({ seat = null, onNavigate }) => {
     powerSpecs: '2x 100W USB-C + Dual AC Outlet',
   };
 
-  const studentName = user?.name || 'Ankit';
+  const studentName = user?.name || 'Ankit Singh Rathore';
   const studentId = user?.studentId || '12513583';
 
   // Booking Configuration State
@@ -574,8 +574,13 @@ export const SeatBookingPage = ({ seat = null, onNavigate }) => {
                     <span className="material-symbols-outlined text-[16px]">person</span>
                     <span>Student</span>
                   </span>
-                  <span className="font-title-md text-title-md text-right font-semibold">
-                    {studentName} ({studentId})
+                  <span className="font-title-md text-title-md text-right font-semibold flex items-center gap-2">
+                    <img
+                      src={user?.avatarUrl || '/assets/ankit-singh-rathore.jpg'}
+                      alt={studentName}
+                      className="w-6 h-6 rounded-full object-cover border border-secondary/40 shrink-0"
+                    />
+                    <span>{studentName} ({studentId})</span>
                   </span>
                 </div>
 

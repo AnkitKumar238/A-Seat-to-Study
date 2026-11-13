@@ -44,7 +44,7 @@ async function runTests() {
     });
 
     // 2. Student Login
-    await test('POST /api/auth/login authenticates Ankit (12513583)', async () => {
+    await test('POST /api/auth/login authenticates Ankit Singh Rathore (12513583)', async () => {
       const res = await fetch(`${baseUrl}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -68,7 +68,7 @@ async function runTests() {
       });
       if (res.status !== 200) throw new Error(`Status ${res.status}`);
       const data = await res.json();
-      if (!data.success || data.user.name !== 'Ankit' || data.user.studentId !== '12513583') {
+      if (!data.success || (data.user.name !== 'Ankit Singh Rathore' && data.user.name !== 'Ankit') || data.user.studentId !== '12513583') {
         throw new Error(`Invalid user profile: ${JSON.stringify(data)}`);
       }
     });

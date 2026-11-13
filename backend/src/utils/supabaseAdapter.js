@@ -7,11 +7,15 @@
 export const normalizeUser = (user) => {
   if (!user) return null;
   const id = user.id || user._id;
+  let userName = user.name;
+  if (!userName || userName === 'Ankit') userName = 'Ankit Singh Rathore';
+  let avatar = user.avatar_url || user.avatarUrl || '';
+  if (!avatar || avatar.includes('googleusercontent')) avatar = '/assets/ankit-singh-rathore.jpg';
   return {
     id,
     _id: id,
     studentId: user.student_id || user.studentId,
-    name: user.name,
+    name: userName,
     email: user.email,
     role: user.role || 'STUDENT',
     department: user.department || 'Lovely Professional University — School of Computer Science & Engineering',
@@ -20,7 +24,7 @@ export const normalizeUser = (user) => {
     weeklyQuotaHours: Number(user.weekly_quota_hours ?? user.weeklyQuotaHours ?? 25.0),
     usedQuotaHours: Number(user.used_quota_hours ?? user.usedQuotaHours ?? 0.0),
     noShowStrikes: Number(user.no_show_strikes ?? user.noShowStrikes ?? 0),
-    avatarUrl: user.avatar_url || user.avatarUrl || '',
+    avatarUrl: avatar,
     createdAt: user.created_at || user.createdAt,
     updatedAt: user.updated_at || user.updatedAt,
   };
@@ -61,7 +65,7 @@ export const normalizeReservation = (res) => {
     _id: id,
     reservationCode: res.reservation_code || res.reservationCode,
     userId: res.user_id || res.userId,
-    userName: res.userName || (res.users && res.users.name) || 'Ankit',
+    userName: res.userName || (res.users && res.users.name) || 'Ankit Singh Rathore',
     studentId: res.student_id || res.studentId || (res.users && res.users.student_id) || '12513583',
     seatId: res.seat_id || res.seatId,
     seatNumber: res.seat_number || res.seatNumber,

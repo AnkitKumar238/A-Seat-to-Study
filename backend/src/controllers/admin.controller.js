@@ -15,7 +15,7 @@ let operationalLogs = [
     id: 'log-001',
     time: '14:32',
     category: 'Check-In',
-    studentName: 'Ankit',
+    studentName: 'Ankit Singh Rathore',
     studentId: '12513583',
     eventDetail: 'Authenticated via RFID Turnstile Gate 02',
     targetUnit: 'Desk B07',
@@ -295,7 +295,7 @@ export const getAdminBookings = async (req, res, next) => {
           const bookings = dbBookings.map((b) => ({
             id: b.id,
             bookingRef: `#BK-${b.reservation_code.slice(-5)}`,
-            studentName: b.user_name || 'Ankit',
+            studentName: b.user_name || 'Ankit Singh Rathore',
             studentId: b.student_id || '12513583',
             department: 'Lovely Professional University (LPU)',
             standing: '100% Tier 1 (Honors)',
@@ -325,7 +325,7 @@ export const getAdminBookings = async (req, res, next) => {
       {
         id: 'res-bk-88410',
         bookingRef: '#BK-88410',
-        studentName: 'Ankit',
+        studentName: 'Ankit Singh Rathore',
         studentId: '12513583',
         department: 'LPU B.Tech CSE',
         standing: '100% Tier 1 (Honors)',

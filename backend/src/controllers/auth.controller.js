@@ -8,7 +8,7 @@ const mockUsers = [
   {
     _id: 'mock-user-ankit-001',
     id: 'mock-user-ankit-001',
-    name: 'Ankit',
+    name: 'Ankit Singh Rathore',
     email: 'ankit@lpu.in',
     aliases: ['12513583', 'ankit@lpu.in', 'student@campus.edu', 'elena.vance@university.edu', '2024-8841', 'student@university.edu', 'student@study.edu'],
     studentId: '12513583',
@@ -20,7 +20,7 @@ const mockUsers = [
     weeklyQuotaHours: 25.0,
     usedQuotaHours: 8.5,
     noShowStrikes: 0,
-    avatarUrl: '',
+    avatarUrl: '/assets/ankit-singh-rathore.jpg',
     createdAt: new Date().toISOString(),
   },
   {

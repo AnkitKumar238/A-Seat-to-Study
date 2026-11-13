@@ -36,7 +36,7 @@ export const LoginPage = ({ onNavigate, onLoginSuccess }) => {
       quickDemoLogin('STUDENT');
       setSsoLoading(false);
       if (onLoginSuccess) {
-        onLoginSuccess({ role: 'STUDENT', name: 'Ankit' });
+        onLoginSuccess({ role: 'STUDENT', name: 'Ankit Singh Rathore' });
       } else if (onNavigate) {
         onNavigate('dashboard');
       }
@@ -198,12 +198,14 @@ export const LoginPage = ({ onNavigate, onLoginSuccess }) => {
                         “Reserving my dual-monitor desk before leaving my dorm transformed my study routine during midterms. No frantic walking up four flights of stairs looking for a plug.”
                       </p>
                       <div className="flex items-center gap-space-sm pt-space-xs">
-                        <div className="w-7 h-7 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-bold text-[11px] shadow-sm">
-                          AN
-                        </div>
+                        <img
+                          src="/assets/ankit-singh-rathore.jpg"
+                          alt="Ankit Singh Rathore"
+                          className="w-9 h-9 rounded-full object-cover border-2 border-secondary shadow-sm shrink-0"
+                        />
                         <div>
                           <p className="font-title-md text-body-md font-semibold text-surface-bright leading-tight">
-                            Ankit
+                            Ankit Singh Rathore
                           </p>
                           <p className="font-label-sm text-label-sm text-primary-fixed-dim">
                             Lovely Professional University (LPU) • B.Tech CSE • ID: 12513583
@@ -417,9 +419,9 @@ export const LoginPage = ({ onNavigate, onLoginSuccess }) => {
                         setPassword('StudySanctuary2025#');
                       }}
                       className="px-2 py-1 bg-surface-container-lowest hover:bg-surface-container-high rounded text-secondary font-label-sm text-label-sm border border-outline-variant/40 transition-colors"
-                      title="Load Student Ankit (12513583)"
+                      title="Load Student Ankit Singh Rathore (12513583)"
                     >
-                      Ankit (Student)
+                      Ankit Singh Rathore (Student)
                     </button>
                     <button
                       type="button"

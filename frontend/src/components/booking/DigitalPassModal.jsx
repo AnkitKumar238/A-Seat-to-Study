@@ -161,13 +161,20 @@ export function DigitalPassModal({ reservation, onClose, onStatusChange }) {
           </div>
 
           {/* Time & Student Details Strip */}
-          <div className="grid grid-cols-2 gap-space-sm bg-surface-container-lowest p-space-sm rounded-xl border border-surface-container-high/40 text-body-sm">
-            <div>
-              <span className="font-label-sm text-label-sm text-outline uppercase block">Student Holder</span>
-              <span className="font-title-md text-title-md text-primary font-semibold">
-                {currentReservation.userName || 'Ankit'}
-              </span>
-              <span className="font-label-sm text-outline block font-mono">ID: {currentReservation.studentId || '12513583'}</span>
+          <div className="grid grid-cols-2 gap-space-sm bg-surface-container-lowest p-space-sm rounded-xl border border-surface-container-high/40 text-body-sm items-center">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <img
+                src="/assets/ankit-singh-rathore.jpg"
+                alt={currentReservation.userName || 'Ankit Singh Rathore'}
+                className="w-11 h-11 rounded-full object-cover border-2 border-secondary/40 shadow-xs shrink-0"
+              />
+              <div className="min-w-0">
+                <span className="font-label-sm text-label-sm text-outline uppercase block">Student Holder</span>
+                <span className="font-title-md text-title-md text-primary font-semibold truncate block">
+                  {currentReservation.userName || 'Ankit Singh Rathore'}
+                </span>
+                <span className="font-label-sm text-outline block font-mono">ID: {currentReservation.studentId || '12513583'}</span>
+              </div>
             </div>
             <div>
               <span className="font-label-sm text-label-sm text-outline uppercase block">Booking Window</span>

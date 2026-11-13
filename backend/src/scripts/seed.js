@@ -19,7 +19,7 @@ async function seed() {
 
     const usersToSeed = [
       {
-        name: 'Ankit',
+        name: 'Ankit Singh Rathore',
         email: 'ankit@lpu.in',
         student_id: '12513583',
         password_hash: demoPasswordHash,
@@ -30,6 +30,7 @@ async function seed() {
         weekly_quota_hours: 25.0,
         used_quota_hours: 8.5,
         no_show_strikes: 0,
+        avatar_url: '/assets/ankit-singh-rathore.jpg',
       },
       {
         name: 'Dr. Arthur Pendelton',
@@ -158,7 +159,7 @@ async function seed() {
       {
         time_label: '14:32',
         category: 'Check-In',
-        student_name: 'Ankit',
+        student_name: 'Ankit Singh Rathore',
         student_id: '12513583',
         event_detail: 'Authenticated via RFID Turnstile Gate 02',
         target_unit: 'Desk B07',

@@ -7,7 +7,15 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(() => {
     try {
       const savedUser = localStorage.getItem('study_user');
-      return savedUser ? JSON.parse(savedUser) : null;
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        if (parsed.name === 'Ankit') parsed.name = 'Ankit Singh Rathore';
+        if (!parsed.avatarUrl || parsed.avatarUrl.includes('googleusercontent')) {
+          parsed.avatarUrl = '/assets/ankit-singh-rathore.jpg';
+        }
+        return parsed;
+      }
+      return null;
     } catch {
       return null;
     }
@@ -125,9 +133,10 @@ export const AuthProvider = ({ children }) => {
     } else {
       const studentUser = {
         id: 'mock-user-ankit-001',
-        name: 'Ankit',
+        name: 'Ankit Singh Rathore',
         email: 'ankit@lpu.in',
         studentId: '12513583',
+        avatarUrl: '/assets/ankit-singh-rathore.jpg',
         role: 'STUDENT',
         department: 'Lovely Professional University (LPU) — School of Computer Science & Engineering',
         academicStanding: 'Undergraduate',

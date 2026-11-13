@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import ankitAvatar from '../../assets/ankit-singh-rathore.jpg';
 
-const AVATAR_URL =
-  'https://lh3.googleusercontent.com/aida-public/AB6AXuAfQAU6UOokY_eynC-uk1Pmf3sc5a1-Lx-Eeu3zILa1a9EwkLjV8yBQUphHn8ITTe5Ef4YhjGDDnLmE6glb3-DAMdCRuO2q0zKiwQBdOft_ABXM09x-LSKdzFeH7mnRfIqbv-KYJy4o13uz2p9TSTJecCY1C-0Hpd8S_8YftyUX1GF1k7WAjjPmrViifGOcplOgpsNMRvojZZ5rQT2GuN6sZyUNKrg9_vWPST0x8iM';
+const AVATAR_URL = ankitAvatar;
 
 export function Header({
   searchQuery = '',
@@ -16,7 +16,7 @@ export function Header({
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const menuRef = useRef(null);
 
-  const studentName = user?.name || 'Ankit';
+  const studentName = user?.name || 'Ankit Singh Rathore';
   const studentId = user?.studentId || '12513583';
   const studentDept = user?.department || 'Lovely Professional University — B.Tech CSE';
   const quotaHours = user?.weeklyQuotaHours || 25.0;
@@ -145,11 +145,18 @@ export function Header({
 
             {/* Profile Dropdown Menu */}
             {showProfileMenu && (
-              <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-surface-container-lowest shadow-2xl border border-outline-variant/30 py-2 z-50 animate-fadeIn">
-                <div className="px-4 py-3 border-b border-surface-container-high">
-                  <p className="font-title-md text-title-md text-primary font-bold">{studentName}</p>
-                  <p className="font-body-sm text-body-sm text-on-surface-variant font-mono">ID: {studentId}</p>
-                  <p className="font-label-sm text-[11px] text-on-surface-variant mt-1 line-clamp-1">{studentDept}</p>
+              <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-surface-container-lowest shadow-2xl border border-outline-variant/30 py-2 z-50 animate-fadeIn">
+                <div className="px-4 py-3 border-b border-surface-container-high flex items-center gap-3">
+                  <img
+                    src={user?.avatarUrl || AVATAR_URL}
+                    alt={studentName}
+                    className="w-12 h-12 rounded-full object-cover border-2 border-secondary/40 shadow-sm shrink-0"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-title-md text-title-md text-primary font-bold truncate">{studentName}</p>
+                    <p className="font-body-sm text-body-sm text-on-surface-variant font-mono">ID: {studentId}</p>
+                    <p className="font-label-sm text-[11px] text-on-surface-variant mt-0.5 line-clamp-1">{studentDept}</p>
+                  </div>
                 </div>
 
                 <div className="px-4 py-2.5 bg-surface-container-low border-b border-surface-container-high flex items-center justify-between">

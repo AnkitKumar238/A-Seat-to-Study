@@ -33,7 +33,7 @@ export function AdminPortalPage() {
       id: 'log-001',
       time: '14:32',
       category: 'Check-In',
-      studentName: 'Ankit (12513583)',
+      studentName: 'Ankit Singh Rathore (12513583)',
       eventDetail: 'Authenticated via RFID Turnstile Gate 02',
       targetUnit: 'Desk B07',
       floorName: 'Floor 2 Sanctuary',
@@ -116,9 +116,10 @@ export function AdminPortalPage() {
     {
       id: 'res-bk-88410',
       bookingRef: '#BK-88410',
-      studentName: 'Ankit',
+      studentName: 'Ankit Singh Rathore',
       studentId: '12513583',
-      initials: 'AN',
+      initials: 'AR',
+      avatarUrl: '/assets/ankit-singh-rathore.jpg',
       department: 'LPU B.Tech CSE',
       standing: '100% Tier 1',
       honorsBadge: "Dean's Honors Scholar",
@@ -1291,9 +1292,17 @@ export function AdminPortalPage() {
                     </td>
                     <td className="py-4 px-4 align-top">
                       <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-title-md font-bold shrink-0">
-                          {b.initials}
-                        </div>
+                        {b.avatarUrl || b.studentName.includes('Ankit') ? (
+                          <img
+                            src={b.avatarUrl || '/assets/ankit-singh-rathore.jpg'}
+                            alt={b.studentName}
+                            className="w-10 h-10 rounded-full object-cover border border-secondary/40 shrink-0"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-title-md font-bold shrink-0">
+                            {b.initials}
+                          </div>
+                        )}
                         <div className="flex flex-col min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="font-title-md text-title-md text-on-surface font-semibold truncate">

@@ -19,7 +19,7 @@ export function DashboardPage({ onNavigate }) {
   // Live analytics state
   const [analytics, setAnalytics] = useState({
     student: {
-      name: user?.name || 'Ankit',
+      name: user?.name || 'Ankit Singh Rathore',
       department: user?.department || 'Lovely Professional University — B.Tech CSE',
       honorTier: "Dean's Honor Tier",
       strikes: user?.noShowStrikes || 0,
@@ -203,7 +203,7 @@ export function DashboardPage({ onNavigate }) {
     }
   };
 
-  const studentDisplayName = user?.name || 'Ankit';
+  const studentDisplayName = user?.name || 'Ankit Singh Rathore';
 
   return (
     <div className="flex flex-col w-full max-w-7xl mx-auto space-y-space-lg">
@@ -259,23 +259,30 @@ export function DashboardPage({ onNavigate }) {
 
       {/* Welcome Editorial Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-space-md">
-        <div className="space-y-1 max-w-2xl">
-          <div className="flex items-center gap-2">
-            <span className="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-bold">
-              Lovely Professional University
-            </span>
-            <span className="text-outline-variant font-label-sm">•</span>
-            <span className="font-label-sm text-label-sm text-on-surface-variant">
-              LPU Central Library
-            </span>
+        <div className="flex items-center gap-3.5 sm:gap-5">
+          <img
+            src={user?.avatarUrl || '/assets/ankit-singh-rathore.jpg'}
+            alt={studentDisplayName}
+            className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover border-2 border-secondary/50 shadow-md shrink-0"
+          />
+          <div className="space-y-1 max-w-2xl">
+            <div className="flex items-center gap-2">
+              <span className="font-label-sm text-label-sm uppercase tracking-wider text-secondary font-bold">
+                Lovely Professional University
+              </span>
+              <span className="text-outline-variant font-label-sm">•</span>
+              <span className="font-label-sm text-label-sm text-on-surface-variant">
+                LPU Central Library
+              </span>
+            </div>
+            <h1 className="font-display-lg text-display-lg-mobile md:text-display-lg text-primary tracking-tight font-bold">
+              Welcome {studentDisplayName}! <span className="inline-block origin-bottom-right">👋</span>
+            </h1>
+            <p className="font-body-lg text-body-lg text-on-surface-variant">
+              Find your focus today.{' '}
+              <strong className="font-semibold text-primary">342 seats</strong> are currently available across 3 central study wings.
+            </p>
           </div>
-          <h1 className="font-display-lg text-display-lg-mobile md:text-display-lg text-primary tracking-tight font-bold">
-            Welcome Ankit! <span className="inline-block origin-bottom-right">👋</span>
-          </h1>
-          <p className="font-body-lg text-body-lg text-on-surface-variant">
-            Find your focus today.{' '}
-            <strong className="font-semibold text-primary">342 seats</strong> are currently available across 3 central study wings.
-          </p>
         </div>
 
         {/* Quick CTA Cluster */}
