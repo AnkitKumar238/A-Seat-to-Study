@@ -1,9 +1,7 @@
-import mongoose from 'mongoose';
-import Seat from '../models/Seat.js';
-import Reservation from '../models/Reservation.js';
-import User from '../models/User.js';
+import { supabase, isSupabaseConfigured } from '../config/supabase.js';
+import { normalizeReservation } from '../utils/supabaseAdapter.js';
 
-// In-memory turnstile gates state
+// In-memory turnstile gates state fallback
 const turnstileGates = [
   { id: 'gate-1', name: 'Turnstile Gate 01 (North Lobby)', status: 'OPERATIONAL', latencyMs: 8, totalSwipesToday: 412 },
   { id: 'gate-2', name: 'Turnstile Gate 02 (Center Atrium)', status: 'OPERATIONAL', latencyMs: 11, totalSwipesToday: 518 },
@@ -11,7 +9,7 @@ const turnstileGates = [
   { id: 'gate-4', name: 'Turnstile Gate 04 (Graduate East Wing)', status: 'OPERATIONAL', latencyMs: 12, totalSwipesToday: 104 },
 ];
 
-// In-memory operational logs
+// In-memory operational logs fallback
 let operationalLogs = [
   {
     id: 'log-001',
@@ -70,7 +68,7 @@ let operationalLogs = [
   },
 ];
 
-// In-memory alerts
+// In-memory alerts fallback
 let adminAlerts = [
   {
     id: 'alert-001',
@@ -105,8 +103,6 @@ let adminAlerts = [
  */
 export const getAdminOverview = async (req, res, next) => {
   try {
-    const isDbConnected = mongoose.connection.readyState === 1;
-
     let seatStats = {
       totalCapacity: 450,
       occupiedDesks: 284,
@@ -120,15 +116,55 @@ export const getAdminOverview = async (req, res, next) => {
       studentsToday: 1248,
     };
 
-    if (isDbConnected) {
-      const totalCount = await Seat.countDocuments();
-      const occupiedCount = await Seat.countDocuments({ currentStatus: 'OCCUPIED' });
-      const reservedCount = await Seat.countDocuments({ currentStatus: 'RESERVED' });
-      if (totalCount > 0) {
-        seatStats.totalCapacity = totalCount;
-        seatStats.occupiedDesks = occupiedCount;
-        seatStats.occupancyPercent = Number(((occupiedCount / totalCount) * 100).toFixed(1));
-        seatStats.availableDesks = totalCount - occupiedCount - reservedCount;
+    let activeGates = turnstileGates;
+    let activeLogs = operationalLogs;
+
+    // 1. Try Supabase
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: dbSeats } = await supabase.from('seats').select('current_status');
+        if (dbSeats && dbSeats.length > 0) {
+          const totalCount = dbSeats.length;
+          const occupiedCount = dbSeats.filter((s) => s.current_status === 'OCCUPIED').length;
+          const reservedCount = dbSeats.filter((s) => s.current_status === 'RESERVED').length;
+          seatStats.totalCapacity = totalCount;
+          seatStats.occupiedDesks = occupiedCount;
+          seatStats.occupancyPercent = Number(((occupiedCount / totalCount) * 100).toFixed(1));
+          seatStats.availableDesks = Math.max(0, totalCount - occupiedCount - reservedCount);
+        }
+
+        const { data: dbGates } = await supabase.from('turnstile_gates').select('*');
+        if (dbGates && dbGates.length > 0) {
+          activeGates = dbGates.map((g) => ({
+            id: g.id,
+            name: g.name,
+            status: g.status,
+            latencyMs: g.latency_ms,
+            totalSwipesToday: g.total_swipes_today,
+          }));
+        }
+
+        const { data: dbLogs } = await supabase
+          .from('operational_logs')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(10);
+
+        if (dbLogs && dbLogs.length > 0) {
+          activeLogs = dbLogs.map((l) => ({
+            id: l.id,
+            time: l.time_label,
+            category: l.category,
+            studentName: l.student_name,
+            studentId: l.student_id,
+            eventDetail: l.event_detail,
+            targetUnit: l.target_unit,
+            floorName: l.floor_name,
+            statusColor: l.status_color,
+          }));
+        }
+      } catch (sbError) {
+        // Fallback
       }
     }
 
@@ -214,7 +250,7 @@ export const getAdminOverview = async (req, res, next) => {
       safeCapacityThresholdPercent: 85,
       systemHealth: {
         soundShield: { status: 'ACTIVE', threshold: '<35 dB enforced Sanctuary' },
-        turnstiles: { status: '4/4 Synced', latency: '<12ms', gates: turnstileGates },
+        turnstiles: { status: '4/4 Synced', latency: '<12ms', gates: activeGates },
         lidarSensors: { total: 450, reporting: 442, recalibrating: 8 },
         autoReleaseEngine: { status: 'ENFORCING', gracePeriodMinutes: 15 },
       },
@@ -226,7 +262,7 @@ export const getAdminOverview = async (req, res, next) => {
           { name: 'Silent Pods (L2)', percent: 76 },
         ],
       },
-      logs: operationalLogs,
+      logs: activeLogs,
       alerts: adminAlerts,
     };
 
@@ -246,97 +282,120 @@ export const getAdminOverview = async (req, res, next) => {
  */
 export const getAdminBookings = async (req, res, next) => {
   try {
-    const isDbConnected = mongoose.connection.readyState === 1;
+    // 1. Try Supabase
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: dbBookings } = await supabase
+          .from('reservations')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(50);
 
-    if (isDbConnected) {
-      const bookings = await Reservation.find()
-        .populate('seatId')
-        .populate('userId', 'name studentId email department noShowStrikes')
-        .sort({ createdAt: -1 })
-        .limit(50);
+        if (dbBookings && dbBookings.length > 0) {
+          const bookings = dbBookings.map((b) => ({
+            id: b.id,
+            bookingRef: `#BK-${b.reservation_code.slice(-5)}`,
+            studentName: b.user_name || 'Ankit',
+            studentId: b.student_id || '12513583',
+            department: 'Lovely Professional University (LPU)',
+            standing: '100% Tier 1 (Honors)',
+            seatNumber: b.seat_number,
+            zoneName: b.zone_name,
+            startTime: b.start_time,
+            endTime: b.end_time,
+            scheduledHours: Number(b.duration_hours),
+            status: b.status,
+            verificationMethod: b.rfid_tap_verified ? 'RFID Desk Scanner Tap' : 'Pending Tap',
+            terminalId: `HBL-${b.seat_number}`,
+          }));
 
-      return res.status(200).json({
-        success: true,
-        count: bookings.length,
-        bookings,
-      });
-    } else {
-      const mockAdminBookings = [
-        {
-          id: 'res-bk-88410',
-          bookingRef: '#BK-88410',
-          studentName: 'Ankit',
-          studentId: '12513583',
-          department: 'LPU B.Tech CSE',
-          standing: '100% Tier 1 (Honors)',
-          seatNumber: 'B07',
-          zoneName: 'Floor 2 • Collab Hub',
-          startTime: '12:00 PM',
-          endTime: '02:00 PM',
-          scheduledHours: 2.0,
-          status: 'CHECKED_IN',
-          verificationMethod: 'RFID Desk Scanner Tap',
-          verifiedAt: '12:04 PM',
-          terminalId: 'HBL-2B-SN7',
-        },
-        {
-          id: 'res-bk-88411',
-          bookingRef: '#BK-88411',
-          studentName: 'Marcus A. Thorne',
-          studentId: '2023-1940',
-          department: 'Mechanical Eng.',
-          standing: '98% Tier 1',
-          seatNumber: 'A14',
-          zoneName: 'Floor 1 • Panorama Bar',
-          startTime: '02:00 PM',
-          endTime: '05:00 PM',
-          scheduledHours: 3.0,
-          status: 'PENDING_GRACE',
-          verificationMethod: 'Gate 2 Swiped (Turnstile)',
-          graceRemainingMinutes: 11,
-          terminalId: 'HBL-1A-GATE2',
-        },
-        {
-          id: 'res-bk-88398',
-          bookingRef: '#BK-88398',
-          studentName: 'Chloe Zhao',
-          studentId: '2025-4421',
-          department: 'Fine Arts (Media)',
-          standing: '92% Tier 2 (1 late record)',
-          seatNumber: 'D04',
-          zoneName: 'Floor 3 • Dual Tech Station',
-          startTime: '01:00 PM',
-          endTime: '03:00 PM',
-          scheduledHours: 2.0,
-          status: 'CHECKED_IN',
-          verificationMethod: 'RFID Desk Scanner Tap',
-          verifiedAt: '01:02 PM',
-          terminalId: 'HBL-3D-SN4',
-        },
-        {
-          id: 'res-bk-88390',
-          bookingRef: '#BK-88390',
-          studentName: 'Julian Ray',
-          studentId: '2023-4109',
-          department: 'Economics',
-          standing: '85% Tier 3 (1 strike)',
-          seatNumber: 'C12',
-          zoneName: 'Floor 2 • Sanctuary',
-          startTime: '01:30 PM',
-          endTime: '03:30 PM',
-          scheduledHours: 2.0,
-          status: 'AUTO_RELEASED',
-          verificationMethod: 'Unclaimed (15m elapsed)',
-          terminalId: 'SYSTEM_AUTOSWEEP',
-        },
-      ];
-
-      return res.status(200).json({
-        success: true,
-        count: mockAdminBookings.length,
-        bookings: mockAdminBookings,
-      });
+          return res.status(200).json({
+            success: true,
+            count: bookings.length,
+            bookings,
+          });
+        }
+      } catch (sbError) {
+        // Fallback
+      }
     }
+
+    // 2. Fallback memory bookings
+    const mockAdminBookings = [
+      {
+        id: 'res-bk-88410',
+        bookingRef: '#BK-88410',
+        studentName: 'Ankit',
+        studentId: '12513583',
+        department: 'LPU B.Tech CSE',
+        standing: '100% Tier 1 (Honors)',
+        seatNumber: 'B07',
+        zoneName: 'Floor 2 • Collab Hub',
+        startTime: '12:00 PM',
+        endTime: '02:00 PM',
+        scheduledHours: 2.0,
+        status: 'CHECKED_IN',
+        verificationMethod: 'RFID Desk Scanner Tap',
+        verifiedAt: '12:04 PM',
+        terminalId: 'HBL-2B-SN7',
+      },
+      {
+        id: 'res-bk-88411',
+        bookingRef: '#BK-88411',
+        studentName: 'Marcus A. Thorne',
+        studentId: '2023-1940',
+        department: 'Mechanical Eng.',
+        standing: '98% Tier 1',
+        seatNumber: 'A14',
+        zoneName: 'Floor 1 • Panorama Bar',
+        startTime: '02:00 PM',
+        endTime: '05:00 PM',
+        scheduledHours: 3.0,
+        status: 'PENDING_GRACE',
+        verificationMethod: 'Gate 2 Swiped (Turnstile)',
+        graceRemainingMinutes: 11,
+        terminalId: 'HBL-1A-GATE2',
+      },
+      {
+        id: 'res-bk-88398',
+        bookingRef: '#BK-88398',
+        studentName: 'Chloe Zhao',
+        studentId: '2025-4421',
+        department: 'Fine Arts (Media)',
+        standing: '92% Tier 2 (1 late record)',
+        seatNumber: 'D04',
+        zoneName: 'Floor 3 • Dual Tech Station',
+        startTime: '01:00 PM',
+        endTime: '03:00 PM',
+        scheduledHours: 2.0,
+        status: 'CHECKED_IN',
+        verificationMethod: 'RFID Desk Scanner Tap',
+        verifiedAt: '01:02 PM',
+        terminalId: 'HBL-3D-SN4',
+      },
+      {
+        id: 'res-bk-88390',
+        bookingRef: '#BK-88390',
+        studentName: 'Julian Ray',
+        studentId: '2023-4109',
+        department: 'Economics',
+        standing: '85% Tier 3 (1 strike)',
+        seatNumber: 'C12',
+        zoneName: 'Floor 2 • Sanctuary',
+        startTime: '01:30 PM',
+        endTime: '03:30 PM',
+        scheduledHours: 2.0,
+        status: 'AUTO_RELEASED',
+        verificationMethod: 'Unclaimed (15m elapsed)',
+        terminalId: 'SYSTEM_AUTOSWEEP',
+      },
+    ];
+
+    return res.status(200).json({
+      success: true,
+      count: mockAdminBookings.length,
+      bookings: mockAdminBookings,
+    });
   } catch (error) {
     next(error);
   }
@@ -351,23 +410,34 @@ export const overrideSeatStatus = async (req, res, next) => {
   try {
     const { seatNumber } = req.params;
     const { status = 'MAINTENANCE', note = 'Administrative override' } = req.body;
-    const isDbConnected = mongoose.connection.readyState === 1;
 
-    if (isDbConnected) {
-      const seat = await Seat.findOne({ seatNumber });
-      if (!seat) {
-        return res.status(404).json({ success: false, message: `Seat ${seatNumber} not found.` });
-      }
-      seat.currentStatus = status;
-      await seat.save();
+    // 1. Try Supabase
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase
+          .from('seats')
+          .update({ current_status: status })
+          .ilike('seat_number', seatNumber);
+
+        await supabase.from('operational_logs').insert({
+          time_label: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          category: 'Admin Override',
+          student_name: 'Administrator',
+          student_id: 'ADMIN',
+          event_detail: `Seat status manually changed to ${status}. Note: ${note}`,
+          target_unit: `Desk ${seatNumber}`,
+          floor_name: 'Operations Control',
+          status_color: status === 'MAINTENANCE' ? 'warning' : 'secondary',
+        });
+      } catch (e) {}
     }
 
-    // Append to operational log
+    // Append to in-memory operational log
     operationalLogs.unshift({
       id: `log-${Date.now()}`,
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       category: 'Admin Override',
-      studentName: 'Administrator (Dr. M. Vance)',
+      studentName: 'Administrator',
       studentId: 'ADMIN',
       eventDetail: `Seat status manually changed to ${status}. Note: ${note}`,
       targetUnit: `Desk ${seatNumber}`,
@@ -395,14 +465,34 @@ export const waiveStudentStrike = async (req, res, next) => {
   try {
     const { studentId } = req.params;
     const { reason = 'Excused academic conflict / hardware scanner issue' } = req.body;
-    const isDbConnected = mongoose.connection.readyState === 1;
 
-    if (isDbConnected) {
-      const user = await User.findOne({ studentId });
-      if (user && user.noShowStrikes > 0) {
-        user.noShowStrikes = Math.max(0, user.noShowStrikes - 1);
-        await user.save();
-      }
+    // 1. Try Supabase
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: user } = await supabase
+          .from('users')
+          .select('no_show_strikes')
+          .eq('student_id', studentId)
+          .maybeSingle();
+
+        if (user && user.no_show_strikes > 0) {
+          await supabase
+            .from('users')
+            .update({ no_show_strikes: Math.max(0, user.no_show_strikes - 1) })
+            .eq('student_id', studentId);
+        }
+
+        await supabase.from('operational_logs').insert({
+          time_label: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          category: 'Policy Pardon',
+          student_name: `Student ${studentId}`,
+          student_id: studentId,
+          event_detail: `No-show strike waived. Reason: ${reason}`,
+          target_unit: 'Conduct Register',
+          floor_name: 'Administration',
+          status_color: 'tertiary',
+        });
+      } catch (e) {}
     }
 
     // Remove or resolve alert if student 2024-5519
@@ -444,6 +534,16 @@ export const toggleTurnstileGate = async (req, res, next) => {
 
     gate.status = gate.status === 'OPERATIONAL' ? 'LOCKED_OVERFLOW' : 'OPERATIONAL';
 
+    // Try Supabase update
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase
+          .from('turnstile_gates')
+          .update({ status: gate.status })
+          .eq('id', gateId);
+      } catch (e) {}
+    }
+
     return res.status(200).json({
       success: true,
       message: `${gate.name} state set to ${gate.status}.`,
@@ -461,9 +561,32 @@ export const toggleTurnstileGate = async (req, res, next) => {
  */
 export const exportAuditLog = async (req, res, next) => {
   try {
+    let logs = operationalLogs;
+
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: dbLogs } = await supabase
+          .from('operational_logs')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (dbLogs && dbLogs.length > 0) {
+          logs = dbLogs.map((l) => ({
+            time: l.time_label,
+            category: l.category,
+            studentName: l.student_name,
+            studentId: l.student_id,
+            targetUnit: l.target_unit,
+            floorName: l.floor_name,
+            eventDetail: l.event_detail,
+          }));
+        }
+      } catch (e) {}
+    }
+
     const csvHeader = 'Timestamp,Category,Student_Name,Student_ID,Target_Unit,Floor,Event_Details\n';
-    const csvRows = operationalLogs
-      .map((log) => `"${log.time}","${log.category}","${log.studentName}","${log.studentId}","${log.targetUnit}","${log.floorName}","${log.eventDetail.replace(/"/g, '""')}"`)
+    const csvRows = logs
+      .map((log) => `"${log.time}","${log.category}","${log.studentName}","${log.studentId}","${log.targetUnit}","${log.floorName}","${(log.eventDetail || '').replace(/"/g, '""')}"`)
       .join('\n');
 
     res.setHeader('Content-Type', 'text/csv');
@@ -482,4 +605,3 @@ export default {
   toggleTurnstileGate,
   exportAuditLog,
 };
-

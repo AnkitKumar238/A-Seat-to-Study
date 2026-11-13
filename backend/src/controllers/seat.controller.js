@@ -1,8 +1,8 @@
-import mongoose from 'mongoose';
-import Seat from '../models/Seat.js';
+import { supabase, isSupabaseConfigured } from '../config/supabase.js';
+import { normalizeSeat } from '../utils/supabaseAdapter.js';
 
 // Pre-configured Level 02 Sanctuary Seats matching the Google Stitch Floor Plan
-const mockSeatsLevel2 = [
+export const mockSeatsLevel2 = [
   // ZONE A: Silent Study Pods (North Wing) - 16 Seats (A01 - A16)
   ...[
     { num: 'A01', status: 'OCCUPIED' },
@@ -80,7 +80,7 @@ const mockSeatsLevel2 = [
     { num: 'B04', status: 'OCCUPIED' },
     { num: 'B05', status: 'AVAILABLE' },
     { num: 'B06', status: 'AVAILABLE' },
-    { num: 'B07', status: 'AVAILABLE' }, // Default selected in Stitch
+    { num: 'B07', status: 'AVAILABLE' },
     { num: 'B08', status: 'AVAILABLE' },
     { num: 'B09', status: 'OCCUPIED' },
     { num: 'B10', status: 'OCCUPIED' },
@@ -164,39 +164,63 @@ const mockSeatsLevel2 = [
 export const getSeats = async (req, res, next) => {
   try {
     const { floor = 2, zone, status, search, dualMonitor, powerSocket, naturalLight } = req.query;
-    const isDbConnected = mongoose.connection.readyState === 1;
 
-    let seats = [];
+    // 1. Query Supabase PostgreSQL if ready
+    if (isSupabaseConfigured && supabase) {
+      try {
+        let query = supabase
+          .from('seats')
+          .select('*')
+          .eq('floor_level', Number(floor))
+          .order('seat_number', { ascending: true });
 
-    if (isDbConnected) {
-      const query = { floorLevel: Number(floor) };
-      if (zone) query.zoneId = zone;
-      if (status) query.currentStatus = status.toUpperCase();
-      if (search) query.seatNumber = { $regex: search, $options: 'i' };
-      if (dualMonitor === 'true') query['amenities.dualMonitor'] = true;
-      if (powerSocket === 'true') query['amenities.powerSocket'] = true;
-      if (naturalLight === 'true') query['amenities.naturalLight'] = true;
+        if (zone && zone !== 'ALL') {
+          query = query.eq('zone_id', zone);
+        }
+        if (status) {
+          query = query.eq('current_status', status.toUpperCase());
+        }
+        if (search) {
+          query = query.ilike('seat_number', `%${search}%`);
+        }
 
-      seats = await Seat.find(query).sort({ seatNumber: 1 });
+        const { data: dbSeats, error } = await query;
 
-      // If database is empty, seed mockSeats
-      if (seats.length === 0) {
-        await Seat.insertMany(mockSeatsLevel2).catch(() => {});
-        seats = await Seat.find(query).sort({ seatNumber: 1 });
+        if (!error && dbSeats && dbSeats.length > 0) {
+          let filtered = dbSeats.map(normalizeSeat);
+
+          if (dualMonitor === 'true') {
+            filtered = filtered.filter((s) => s.amenities?.dualMonitor);
+          }
+          if (powerSocket === 'true') {
+            filtered = filtered.filter((s) => s.amenities?.powerSocket);
+          }
+          if (naturalLight === 'true') {
+            filtered = filtered.filter((s) => s.amenities?.naturalLight);
+          }
+
+          return res.status(200).json({
+            success: true,
+            count: filtered.length,
+            seats: filtered,
+          });
+        }
+      } catch (sbError) {
+        // Fallback to memory store if query fails
       }
-    } else {
-      // Memory Store Filter
-      seats = mockSeatsLevel2.filter((s) => {
-        if (floor && s.floorLevel !== Number(floor)) return false;
-        if (zone && zone !== 'ALL' && s.zoneId !== zone) return false;
-        if (status && s.currentStatus !== status.toUpperCase()) return false;
-        if (search && !s.seatNumber.toLowerCase().includes(search.toLowerCase())) return false;
-        if (dualMonitor === 'true' && !s.amenities.dualMonitor) return false;
-        if (powerSocket === 'true' && !s.amenities.powerSocket) return false;
-        if (naturalLight === 'true' && !s.amenities.naturalLight) return false;
-        return true;
-      });
     }
+
+    // 2. Memory Store Filter Fallback
+    const seats = mockSeatsLevel2.filter((s) => {
+      if (floor && s.floorLevel !== Number(floor)) return false;
+      if (zone && zone !== 'ALL' && s.zoneId !== zone) return false;
+      if (status && s.currentStatus !== status.toUpperCase()) return false;
+      if (search && !s.seatNumber.toLowerCase().includes(search.toLowerCase())) return false;
+      if (dualMonitor === 'true' && !s.amenities.dualMonitor) return false;
+      if (powerSocket === 'true' && !s.amenities.powerSocket) return false;
+      if (naturalLight === 'true' && !s.amenities.naturalLight) return false;
+      return true;
+    });
 
     return res.status(200).json({
       success: true,
@@ -216,21 +240,31 @@ export const getSeats = async (req, res, next) => {
 export const getSeatById = async (req, res, next) => {
   try {
     const { seatNumber } = req.params;
-    const isDbConnected = mongoose.connection.readyState === 1;
 
-    let seat = null;
+    // 1. Try Supabase
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: dbSeat, error } = await supabase
+          .from('seats')
+          .select('*')
+          .ilike('seat_number', seatNumber)
+          .maybeSingle();
 
-    if (isDbConnected) {
-      seat = await Seat.findOne({
-        seatNumber: { $regex: new RegExp(`^${seatNumber}$`, 'i') },
-      });
+        if (!error && dbSeat) {
+          return res.status(200).json({
+            success: true,
+            seat: normalizeSeat(dbSeat),
+          });
+        }
+      } catch (sbError) {
+        // Fallback
+      }
     }
 
-    if (!seat) {
-      seat = mockSeatsLevel2.find(
-        (s) => s.seatNumber.toLowerCase() === seatNumber.toLowerCase()
-      );
-    }
+    // 2. Fallback memory store
+    const seat = mockSeatsLevel2.find(
+      (s) => s.seatNumber.toLowerCase() === seatNumber.toLowerCase()
+    );
 
     if (!seat) {
       return res.status(404).json({
@@ -241,7 +275,7 @@ export const getSeatById = async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
-      seat,
+      seat: normalizeSeat(seat),
     });
   } catch (error) {
     next(error);
@@ -256,15 +290,46 @@ export const getSeatById = async (req, res, next) => {
 export const getFloorTelemetry = async (req, res, next) => {
   try {
     const floor = Number(req.query.floor) || 2;
-    const seats = mockSeatsLevel2.filter((s) => s.floorLevel === floor);
+    let available = 0;
+    let occupied = 0;
+    let reserved = 0;
+    let offline = 0;
+    let total = 70;
 
-    const available = seats.filter((s) => s.currentStatus === 'AVAILABLE').length;
-    const occupied = seats.filter((s) => s.currentStatus === 'OCCUPIED').length;
-    const reserved = seats.filter((s) => s.currentStatus === 'RESERVED').length;
-    const offline = seats.filter((s) => s.currentStatus === 'OFFLINE').length;
-    const total = seats.length || 70;
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: dbSeats, error } = await supabase
+          .from('seats')
+          .select('current_status')
+          .eq('floor_level', floor);
 
-    const loadPercent = Math.round(((occupied + reserved) / total) * 100);
+        if (!error && dbSeats && dbSeats.length > 0) {
+          total = dbSeats.length;
+          available = dbSeats.filter((s) => s.current_status === 'AVAILABLE').length;
+          occupied = dbSeats.filter((s) => s.current_status === 'OCCUPIED').length;
+          reserved = dbSeats.filter((s) => s.current_status === 'RESERVED').length;
+          offline = dbSeats.filter((s) => s.current_status === 'OFFLINE' || s.current_status === 'MAINTENANCE').length;
+        } else {
+          throw new Error('Fallback needed');
+        }
+      } catch (err) {
+        const seats = mockSeatsLevel2.filter((s) => s.floorLevel === floor);
+        total = seats.length || 70;
+        available = seats.filter((s) => s.currentStatus === 'AVAILABLE').length;
+        occupied = seats.filter((s) => s.currentStatus === 'OCCUPIED').length;
+        reserved = seats.filter((s) => s.currentStatus === 'RESERVED').length;
+        offline = seats.filter((s) => s.currentStatus === 'OFFLINE').length;
+      }
+    } else {
+      const seats = mockSeatsLevel2.filter((s) => s.floorLevel === floor);
+      total = seats.length || 70;
+      available = seats.filter((s) => s.currentStatus === 'AVAILABLE').length;
+      occupied = seats.filter((s) => s.currentStatus === 'OCCUPIED').length;
+      reserved = seats.filter((s) => s.currentStatus === 'RESERVED').length;
+      offline = seats.filter((s) => s.currentStatus === 'OFFLINE').length;
+    }
+
+    const loadPercent = Math.round(((occupied + reserved) / (total || 1)) * 100);
 
     return res.status(200).json({
       success: true,
@@ -293,4 +358,3 @@ export default {
   getSeatById,
   getFloorTelemetry,
 };
-

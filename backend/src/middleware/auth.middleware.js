@@ -1,8 +1,6 @@
-import mongoose from 'mongoose';
 import { verifyToken } from '../utils/generateToken.js';
-import User from '../models/User.js';
-
-// Fallback in-memory user store for dev when MongoDB is not connected
+import { supabase, isSupabaseConfigured } from '../config/supabase.js';
+import { normalizeUser } from '../utils/supabaseAdapter.js';
 import { findUserById } from '../controllers/auth.controller.js';
 
 /**
@@ -29,28 +27,34 @@ export const protect = async (req, res, next) => {
     // Verify token
     const decoded = verifyToken(token);
 
-    // If MongoDB is connected, query DB
-    if (mongoose.connection.readyState === 1) {
-      const user = await User.findById(decoded.id).select('-password');
-      if (!user) {
-        return res.status(401).json({
-          success: false,
-          message: 'User belonging to this token no longer exists.',
-        });
+    // 1. Try Supabase PostgreSQL
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: sbUser, error } = await supabase
+          .from('users')
+          .select('*')
+          .or(`id.eq.${decoded.id},student_id.eq.${decoded.studentId || decoded.id}`)
+          .maybeSingle();
+
+        if (!error && sbUser) {
+          req.user = normalizeUser(sbUser);
+          return next();
+        }
+      } catch (err) {
+        // Fall through to memory store if table not created or query fails
       }
-      req.user = user;
-    } else {
-      // Use fallback memory store
-      const user = findUserById(decoded.id);
-      if (!user) {
-        return res.status(401).json({
-          success: false,
-          message: 'Session invalid. Please log in again.',
-        });
-      }
-      req.user = user;
     }
 
+    // 2. Fallback in-memory store
+    const user = findUserById(decoded.id);
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: 'Session invalid or user no longer exists. Please log in again.',
+      });
+    }
+
+    req.user = user;
     next();
   } catch (error) {
     return res.status(401).json({
@@ -90,4 +94,3 @@ export const authorize = (...roles) => {
 };
 
 export default { protect, adminOnly, authorize };
-

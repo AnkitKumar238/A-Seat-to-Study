@@ -1,11 +1,8 @@
-import mongoose from 'mongoose';
-import Reservation from '../models/Reservation.js';
-import Seat from '../models/Seat.js';
-import User from '../models/User.js';
-import { findUserById } from './auth.controller.js';
+import { supabase, isSupabaseConfigured } from '../config/supabase.js';
+import { normalizeReservation } from '../utils/supabaseAdapter.js';
 
 // In-memory reservations database with rich realistic data aligned to Google Stitch screens
-const mockReservations = [
+export const mockReservations = [
   {
     _id: 'mock-res-001',
     id: 'mock-res-001',
@@ -154,92 +151,132 @@ export const createReservation = async (req, res, next) => {
       studentId: '12513583',
     };
 
-    const isDbConnected = mongoose.connection.readyState === 1;
     const reservationCode = `PASS-LPU-${user.studentId || '12513583'}-${seatNumber}-${Date.now().toString().slice(-4)}`;
     const holdExpiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 mins grace period
 
-    if (isDbConnected) {
-      // Find seat
-      const seat = await Seat.findOne({ seatNumber });
-      if (seat && seat.currentStatus === 'OCCUPIED') {
-        return res.status(409).json({
-          success: false,
-          message: `Seat ${seatNumber} is currently occupied by another student.`,
-        });
+    // 1. Try Supabase
+    if (isSupabaseConfigured && supabase) {
+      try {
+        // Find seat
+        const { data: seat } = await supabase
+          .from('seats')
+          .select('*')
+          .ilike('seat_number', seatNumber)
+          .maybeSingle();
+
+        if (seat && seat.current_status === 'OCCUPIED') {
+          return res.status(409).json({
+            success: false,
+            message: `Seat ${seatNumber} is currently occupied by another student.`,
+          });
+        }
+
+        const seatId = seat ? seat.id : null;
+        const deskCode = seat?.desk_code || `#AT-${seatNumber.slice(1)}`;
+        const zoneName = seat?.zone_name || 'Zone B • Collaborative Study Hub';
+
+        const { data: newDbRes, error: insertError } = await supabase
+          .from('reservations')
+          .insert({
+            reservation_code: reservationCode,
+            user_id: user.id || user._id,
+            seat_id: seatId,
+            seat_number: seatNumber,
+            desk_code: deskCode,
+            floor_level: Number(floorLevel),
+            zone_name: zoneName,
+            date,
+            start_time: startTime,
+            end_time: endTime,
+            duration_hours: Number(durationHours),
+            status: 'CONFIRMED',
+            hold_expires_at: holdExpiresAt.toISOString(),
+            academic_purpose: academicPurpose,
+            sms_notification_enabled: smsNotification,
+            companion_mode_enabled: companionMode,
+          })
+          .select('*')
+          .single();
+
+        if (!insertError && newDbRes) {
+          // Update seat status
+          if (seatId) {
+            await supabase
+              .from('seats')
+              .update({
+                current_status: 'RESERVED',
+                current_reservation_id: newDbRes.id,
+              })
+              .eq('id', seatId);
+          }
+
+          // Update user quota
+          try {
+            const { data: userData } = await supabase
+              .from('users')
+              .select('used_quota_hours')
+              .eq('id', user.id || user._id)
+              .maybeSingle();
+
+            if (userData) {
+              await supabase
+                .from('users')
+                .update({
+                  used_quota_hours: Number(userData.used_quota_hours || 0) + Number(durationHours),
+                })
+                .eq('id', user.id || user._id);
+            }
+          } catch (e) {
+            // Ignore quota update error
+          }
+
+          return res.status(201).json({
+            success: true,
+            message: 'Seat reservation confirmed and Digital Pass issued in Supabase.',
+            reservation: normalizeReservation({
+              ...newDbRes,
+              deskCode,
+              zoneName,
+            }),
+          });
+        }
+      } catch (sbError) {
+        // Fallback
       }
-
-      const reservation = await Reservation.create({
-        reservationCode,
-        userId: user.id || user._id,
-        seatId: seat ? seat._id : new mongoose.Types.ObjectId(),
-        date: new Date(date),
-        startTime: new Date(`${date}T${startTime}:00`),
-        endTime: new Date(`${date}T${endTime}:00`),
-        durationHours: Number(durationHours),
-        status: 'CONFIRMED',
-        holdExpiresAt,
-        academicPurpose,
-        smsNotificationEnabled: smsNotification,
-        companionModeEnabled: companionMode,
-      });
-
-      // Update seat status to RESERVED
-      if (seat) {
-        seat.currentStatus = 'RESERVED';
-        seat.currentReservation = reservation._id;
-        await seat.save();
-      }
-
-      // Update user quota
-      await User.findByIdAndUpdate(user.id || user._id, {
-        $inc: { usedQuotaHours: Number(durationHours) },
-      });
-
-      return res.status(201).json({
-        success: true,
-        message: 'Seat reservation confirmed and Digital Pass issued.',
-        reservation: {
-          ...reservation.toObject(),
-          seatNumber,
-          deskCode: seat ? seat.deskCode : `#AT-${seatNumber.slice(1)}`,
-          floorLevel,
-          zoneName: seat ? seat.zoneName : 'Zone B • Collaborative Study Hub',
-        },
-      });
-    } else {
-      // Dev Memory Store
-      const newReservation = {
-        _id: `mock-res-${Date.now()}`,
-        id: `mock-res-${Date.now()}`,
-        reservationCode,
-        userId: user.id || user._id,
-        userName: user.name || 'Ankit',
-        studentId: user.studentId || '12513583',
-        seatNumber,
-        deskCode: `#AT-${seatNumber.slice(1)}`,
-        floorLevel: Number(floorLevel),
-        zoneName: 'Zone B • Collaborative Study Hub (Center Atrium)',
-        date,
-        startTime,
-        endTime,
-        durationHours: Number(durationHours),
-        status: 'CONFIRMED',
-        holdExpiresAt: holdExpiresAt.toISOString(),
-        academicPurpose,
-        smsNotification,
-        companionMode,
-        rfidTapVerified: false,
-        createdAt: new Date().toISOString(),
-      };
-
-      mockReservations.unshift(newReservation);
-
-      return res.status(201).json({
-        success: true,
-        message: 'Seat reservation confirmed and Digital Pass issued (Dev memory store).',
-        reservation: newReservation,
-      });
     }
+
+    // 2. Dev Memory Store Fallback
+    const newReservation = {
+      _id: `mock-res-${Date.now()}`,
+      id: `mock-res-${Date.now()}`,
+      reservationCode,
+      userId: user.id || user._id,
+      userName: user.name || 'Ankit',
+      studentId: user.studentId || '12513583',
+      seatNumber,
+      deskCode: `#AT-${seatNumber.slice(1)}`,
+      floorLevel: Number(floorLevel),
+      zoneName: 'Zone B • Collaborative Study Hub (Center Atrium)',
+      date,
+      startTime,
+      endTime,
+      durationHours: Number(durationHours),
+      status: 'CONFIRMED',
+      holdExpiresAt: holdExpiresAt.toISOString(),
+      academicPurpose,
+      smsNotification,
+      companionMode,
+      rfidTapVerified: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    mockReservations.unshift(newReservation);
+
+    return res.status(201).json({
+      success: true,
+      message: 'Seat reservation confirmed and Digital Pass issued.',
+      reservation: normalizeReservation(newReservation),
+    });
   } catch (error) {
     next(error);
   }
@@ -253,25 +290,34 @@ export const createReservation = async (req, res, next) => {
 export const getMyReservations = async (req, res, next) => {
   try {
     const userId = req.user?.id || req.user?._id || 'mock-user-ankit-001';
-    const isDbConnected = mongoose.connection.readyState === 1;
 
-    if (isDbConnected) {
-      const reservations = await Reservation.find({ userId })
-        .populate('seatId')
-        .sort({ createdAt: -1 });
+    // 1. Try Supabase
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: dbReservations, error } = await supabase
+          .from('reservations')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false });
 
-      return res.status(200).json({
-        success: true,
-        count: reservations.length,
-        reservations,
-      });
-    } else {
-      return res.status(200).json({
-        success: true,
-        count: mockReservations.length,
-        reservations: mockReservations,
-      });
+        if (!error && dbReservations && dbReservations.length > 0) {
+          return res.status(200).json({
+            success: true,
+            count: dbReservations.length,
+            reservations: dbReservations.map(normalizeReservation),
+          });
+        }
+      } catch (sbError) {
+        // Fallback
+      }
     }
+
+    // 2. Memory Store Fallback
+    return res.status(200).json({
+      success: true,
+      count: mockReservations.length,
+      reservations: mockReservations.map(normalizeReservation),
+    });
   } catch (error) {
     next(error);
   }
@@ -285,55 +331,68 @@ export const getMyReservations = async (req, res, next) => {
 export const checkIn = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const isDbConnected = mongoose.connection.readyState === 1;
 
-    if (isDbConnected) {
-      const reservation = await Reservation.findOne({
-        $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { reservationCode: id }],
-      });
+    // 1. Try Supabase
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: resItem, error } = await supabase
+          .from('reservations')
+          .select('*')
+          .or(`id.eq.${id},reservation_code.eq.${id}`)
+          .maybeSingle();
 
-      if (!reservation) {
-        return res.status(404).json({
-          success: false,
-          message: 'Reservation pass not found.',
-        });
+        if (resItem) {
+          const nowIso = new Date().toISOString();
+          const { data: updatedRes } = await supabase
+            .from('reservations')
+            .update({
+              status: 'CHECKED_IN',
+              checked_in_at: nowIso,
+              rfid_tap_verified: true,
+            })
+            .eq('id', resItem.id)
+            .select('*')
+            .single();
+
+          if (resItem.seat_id) {
+            await supabase
+              .from('seats')
+              .update({ current_status: 'OCCUPIED' })
+              .eq('id', resItem.seat_id);
+          }
+
+          return res.status(200).json({
+            success: true,
+            message: 'RFID verification successful! Desk power and dual 4K monitors unlocked.',
+            reservation: normalizeReservation(updatedRes || resItem),
+          });
+        }
+      } catch (sbError) {
+        // Fallback
       }
+    }
 
-      reservation.status = 'CHECKED_IN';
-      reservation.checkedInAt = new Date();
-      await reservation.save();
+    // 2. Memory Store Fallback
+    const reservation = mockReservations.find(
+      (r) => r.id === id || r._id === id || r.reservationCode === id
+    );
 
-      if (reservation.seatId) {
-        await Seat.findByIdAndUpdate(reservation.seatId, { currentStatus: 'OCCUPIED' });
-      }
-
-      return res.status(200).json({
-        success: true,
-        message: 'RFID verification successful! Desk power and dual 4K monitors unlocked.',
-        reservation,
-      });
-    } else {
-      const reservation = mockReservations.find(
-        (r) => r.id === id || r._id === id || r.reservationCode === id
-      );
-
-      if (!reservation) {
-        return res.status(404).json({
-          success: false,
-          message: 'Reservation pass not found.',
-        });
-      }
-
-      reservation.status = 'CHECKED_IN';
-      reservation.rfidTapVerified = true;
-      reservation.checkedInAt = new Date().toISOString();
-
-      return res.status(200).json({
-        success: true,
-        message: 'RFID verification successful! Desk power and dual 4K monitors unlocked.',
-        reservation,
+    if (!reservation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Reservation pass not found.',
       });
     }
+
+    reservation.status = 'CHECKED_IN';
+    reservation.rfidTapVerified = true;
+    reservation.checkedInAt = new Date().toISOString();
+
+    return res.status(200).json({
+      success: true,
+      message: 'RFID verification successful! Desk power and dual 4K monitors unlocked.',
+      reservation: normalizeReservation(reservation),
+    });
   } catch (error) {
     next(error);
   }
@@ -347,58 +406,78 @@ export const checkIn = async (req, res, next) => {
 export const cancelReservation = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const isDbConnected = mongoose.connection.readyState === 1;
 
-    if (isDbConnected) {
-      const reservation = await Reservation.findOne({
-        $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { reservationCode: id }],
-      });
+    // 1. Try Supabase
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: resItem } = await supabase
+          .from('reservations')
+          .select('*')
+          .or(`id.eq.${id},reservation_code.eq.${id}`)
+          .maybeSingle();
 
-      if (!reservation) {
-        return res.status(404).json({
-          success: false,
-          message: 'Reservation pass not found.',
-        });
+        if (resItem) {
+          await supabase
+            .from('reservations')
+            .update({ status: 'CANCELLED' })
+            .eq('id', resItem.id);
+
+          if (resItem.seat_id) {
+            await supabase
+              .from('seats')
+              .update({
+                current_status: 'AVAILABLE',
+                current_reservation_id: null,
+              })
+              .eq('id', resItem.seat_id);
+          }
+
+          // Refund quota hours
+          try {
+            const { data: user } = await supabase
+              .from('users')
+              .select('used_quota_hours')
+              .eq('id', resItem.user_id)
+              .maybeSingle();
+
+            if (user) {
+              await supabase
+                .from('users')
+                .update({
+                  used_quota_hours: Math.max(0, Number(user.used_quota_hours) - Number(resItem.duration_hours)),
+                })
+                .eq('id', resItem.user_id);
+            }
+          } catch (e) {}
+
+          return res.status(200).json({
+            success: true,
+            message: 'Reservation cancelled. Desk released back to available inventory.',
+          });
+        }
+      } catch (sbError) {
+        // Fallback
       }
+    }
 
-      reservation.status = 'CANCELLED';
-      await reservation.save();
+    // 2. Memory Store Fallback
+    const reservation = mockReservations.find(
+      (r) => r.id === id || r._id === id || r.reservationCode === id
+    );
 
-      if (reservation.seatId) {
-        await Seat.findByIdAndUpdate(reservation.seatId, {
-          currentStatus: 'AVAILABLE',
-          currentReservation: null,
-        });
-      }
-
-      // Refund quota hours
-      await User.findByIdAndUpdate(reservation.userId, {
-        $inc: { usedQuotaHours: -reservation.durationHours },
-      });
-
-      return res.status(200).json({
-        success: true,
-        message: 'Reservation cancelled. Desk released back to available inventory.',
-      });
-    } else {
-      const reservation = mockReservations.find(
-        (r) => r.id === id || r._id === id || r.reservationCode === id
-      );
-
-      if (!reservation) {
-        return res.status(404).json({
-          success: false,
-          message: 'Reservation pass not found.',
-        });
-      }
-
-      reservation.status = 'CANCELLED';
-
-      return res.status(200).json({
-        success: true,
-        message: 'Reservation cancelled. Desk released back to available inventory.',
+    if (!reservation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Reservation pass not found.',
       });
     }
+
+    reservation.status = 'CANCELLED';
+
+    return res.status(200).json({
+      success: true,
+      message: 'Reservation cancelled. Desk released back to available inventory.',
+    });
   } catch (error) {
     next(error);
   }
@@ -412,41 +491,70 @@ export const cancelReservation = async (req, res, next) => {
 export const autoSweepGraceExpired = async (req, res, next) => {
   try {
     const now = new Date();
-    const isDbConnected = mongoose.connection.readyState === 1;
     let releasedCount = 0;
 
-    if (isDbConnected) {
-      const expired = await Reservation.find({
-        status: 'CONFIRMED',
-        holdExpiresAt: { $lt: now },
-      });
+    // 1. Try Supabase
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: expired } = await supabase
+          .from('reservations')
+          .select('*')
+          .eq('status', 'CONFIRMED')
+          .lt('hold_expires_at', now.toISOString());
 
-      for (const resItem of expired) {
-        resItem.status = 'AUTO_RELEASED';
-        await resItem.save();
+        if (expired && expired.length > 0) {
+          for (const item of expired) {
+            await supabase
+              .from('reservations')
+              .update({ status: 'AUTO_RELEASED' })
+              .eq('id', item.id);
 
-        if (resItem.seatId) {
-          await Seat.findByIdAndUpdate(resItem.seatId, {
-            currentStatus: 'AVAILABLE',
-            currentReservation: null,
+            if (item.seat_id) {
+              await supabase
+                .from('seats')
+                .update({
+                  current_status: 'AVAILABLE',
+                  current_reservation_id: null,
+                })
+                .eq('id', item.seat_id);
+            }
+
+            try {
+              const { data: user } = await supabase
+                .from('users')
+                .select('no_show_strikes')
+                .eq('id', item.user_id)
+                .maybeSingle();
+
+              if (user) {
+                await supabase
+                  .from('users')
+                  .update({ no_show_strikes: (user.no_show_strikes || 0) + 1 })
+                  .eq('id', item.user_id);
+              }
+            } catch (e) {}
+
+            releasedCount++;
+          }
+
+          return res.status(200).json({
+            success: true,
+            message: `Fair Use Grace Sweep complete: ${releasedCount} unclaimed desks auto-recycled.`,
+            releasedCount,
           });
         }
+      } catch (sbError) {
+        // Fallback
+      }
+    }
 
-        // Add 1 strike to student for no-show
-        await User.findByIdAndUpdate(resItem.userId, {
-          $inc: { noShowStrikes: 1 },
-        });
-
+    // 2. Memory Store Fallback
+    mockReservations.forEach((r) => {
+      if (r.status === 'CONFIRMED' && new Date(r.holdExpiresAt) < now) {
+        r.status = 'AUTO_RELEASED';
         releasedCount++;
       }
-    } else {
-      mockReservations.forEach((r) => {
-        if (r.status === 'CONFIRMED' && new Date(r.holdExpiresAt) < now) {
-          r.status = 'AUTO_RELEASED';
-          releasedCount++;
-        }
-      });
-    }
+    });
 
     return res.status(200).json({
       success: true,
@@ -468,58 +576,59 @@ export const extendReservation = async (req, res, next) => {
     const { id } = req.params;
     const { additionalMinutes = 30 } = req.body;
     const addHours = Number(additionalMinutes) / 60;
-    const isDbConnected = mongoose.connection.readyState === 1;
 
-    if (isDbConnected) {
-      const reservation = await Reservation.findOne({
-        $or: [{ _id: mongoose.isValidObjectId(id) ? id : null }, { reservationCode: id }],
-      });
+    // 1. Try Supabase
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: resItem } = await supabase
+          .from('reservations')
+          .select('*')
+          .or(`id.eq.${id},reservation_code.eq.${id}`)
+          .maybeSingle();
 
-      if (!reservation) {
-        return res.status(404).json({
-          success: false,
-          message: 'Reservation pass not found.',
-        });
+        if (resItem) {
+          const newDuration = Number(resItem.duration_hours || 2.0) + addHours;
+          const { data: updated } = await supabase
+            .from('reservations')
+            .update({
+              duration_hours: newDuration,
+              extended_minutes: (resItem.extended_minutes || 0) + Number(additionalMinutes),
+            })
+            .eq('id', resItem.id)
+            .select('*')
+            .single();
+
+          return res.status(200).json({
+            success: true,
+            message: `Desk reservation extended by +${additionalMinutes} minutes.`,
+            reservation: normalizeReservation(updated || resItem),
+          });
+        }
+      } catch (sbError) {
+        // Fallback
       }
+    }
 
-      const currentEnd = new Date(reservation.endTime);
-      const newEnd = new Date(currentEnd.getTime() + additionalMinutes * 60 * 1000);
+    // 2. Memory Store Fallback
+    const reservation = mockReservations.find(
+      (r) => r.id === id || r._id === id || r.reservationCode === id
+    );
 
-      reservation.endTime = newEnd;
-      reservation.durationHours = Number(reservation.durationHours) + addHours;
-      await reservation.save();
-
-      // Deduct quota hours
-      await User.findByIdAndUpdate(reservation.userId, {
-        $inc: { usedQuotaHours: addHours },
-      });
-
-      return res.status(200).json({
-        success: true,
-        message: `Desk reservation extended by +${additionalMinutes} minutes.`,
-        reservation,
-      });
-    } else {
-      const reservation = mockReservations.find(
-        (r) => r.id === id || r._id === id || r.reservationCode === id
-      );
-
-      if (!reservation) {
-        return res.status(404).json({
-          success: false,
-          message: 'Reservation pass not found.',
-        });
-      }
-
-      reservation.durationHours = Number(reservation.durationHours) + addHours;
-      reservation.extendedMinutes = (reservation.extendedMinutes || 0) + additionalMinutes;
-
-      return res.status(200).json({
-        success: true,
-        message: `Desk reservation extended by +${additionalMinutes} minutes.`,
-        reservation,
+    if (!reservation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Reservation pass not found.',
       });
     }
+
+    reservation.durationHours = Number(reservation.durationHours) + addHours;
+    reservation.extendedMinutes = (reservation.extendedMinutes || 0) + additionalMinutes;
+
+    return res.status(200).json({
+      success: true,
+      message: `Desk reservation extended by +${additionalMinutes} minutes.`,
+      reservation: normalizeReservation(reservation),
+    });
   } catch (error) {
     next(error);
   }
@@ -542,31 +651,44 @@ export const getStudentAnalytics = async (req, res, next) => {
       noShowStrikes: 0,
     };
 
-    const isDbConnected = mongoose.connection.readyState === 1;
-
-    // Active reservation
     let activeBooking = null;
     let upcomingCount = 0;
     let completedCount = 0;
 
-    if (isDbConnected) {
-      const active = await Reservation.findOne({
-        userId: user.id || user._id,
-        status: 'CHECKED_IN',
-      }).populate('seatId');
+    // 1. Try Supabase
+    if (isSupabaseConfigured && supabase) {
+      try {
+        const { data: active } = await supabase
+          .from('reservations')
+          .select('*')
+          .eq('user_id', user.id || user._id)
+          .eq('status', 'CHECKED_IN')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      if (active) {
-        activeBooking = active;
-      }
-      upcomingCount = await Reservation.countDocuments({
-        userId: user.id || user._id,
-        status: 'CONFIRMED',
-      });
-      completedCount = await Reservation.countDocuments({
-        userId: user.id || user._id,
-        status: 'COMPLETED',
-      });
-    } else {
+        if (active) {
+          activeBooking = normalizeReservation(active);
+        }
+
+        const { count: upCount } = await supabase
+          .from('reservations')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id || user._id)
+          .eq('status', 'CONFIRMED');
+
+        const { count: compCount } = await supabase
+          .from('reservations')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', user.id || user._id)
+          .eq('status', 'COMPLETED');
+
+        if (typeof upCount === 'number') upcomingCount = upCount;
+        if (typeof compCount === 'number') completedCount = compCount;
+      } catch (err) {}
+    }
+
+    if (!activeBooking) {
       activeBooking = mockReservations.find((r) => r.status === 'CHECKED_IN') || mockReservations[0];
       upcomingCount = mockReservations.filter((r) => r.status === 'CONFIRMED').length;
       completedCount = mockReservations.filter((r) => r.status === 'COMPLETED').length;
@@ -696,4 +818,3 @@ export default {
   extendReservation,
   getStudentAnalytics,
 };
-

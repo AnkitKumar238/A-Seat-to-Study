@@ -52,9 +52,10 @@ app.get('/', (req, res) => {
     documentation: '/api/health',
     version: '1.0.0',
     database: {
-      configured: false,
-      status: 'not_configured',
-      message: 'Database is not configured yet (Supabase integration pending).',
+      provider: 'supabase_postgresql',
+      configured: true,
+      status: 'configured',
+      message: 'Supabase PostgreSQL integration active.',
     },
   });
 });

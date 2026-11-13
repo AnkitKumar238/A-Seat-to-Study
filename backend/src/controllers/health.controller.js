@@ -1,9 +1,18 @@
+import { supabase, isSupabaseConfigured } from '../config/supabase.js';
+
 /**
  * Health check controller.
- * Returns API operational status, environment, and database state.
- * Works independently of any database connection.
+ * Returns API operational status, environment, and Supabase database state.
  */
-export const getHealthStatus = (req, res) => {
+export const getHealthStatus = async (req, res) => {
+  let dbStatus = 'configured';
+  let dbMessage = 'Supabase client initialized with cloud PostgreSQL.';
+
+  if (!isSupabaseConfigured) {
+    dbStatus = 'not_configured';
+    dbMessage = 'Supabase credentials missing. Running on memory fallback.';
+  }
+
   res.status(200).json({
     success: true,
     service: 'A Seat to Study API',
@@ -11,10 +20,12 @@ export const getHealthStatus = (req, res) => {
     environment: process.env.NODE_ENV || 'development',
     timestamp: new Date().toISOString(),
     database: {
-      configured: false,
-      status: 'not_configured',
-      message: 'Database is not configured yet (Supabase integration pending). Running with in-memory data store.',
+      provider: 'supabase_postgresql',
+      configured: isSupabaseConfigured,
+      status: dbStatus,
+      message: dbMessage,
     },
   });
 };
 
+export default { getHealthStatus };
