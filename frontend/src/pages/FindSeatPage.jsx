@@ -403,14 +403,15 @@ export const FindSeatPage = ({ onNavigate, onSelectSeatForBooking }) => {
       {/* Main Asymmetric Workspace Layout: Floor Canvas + Contextual Seat Detail Drawer */}
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-space-lg items-start">
         {/* Left 8 Columns: Blueprint Canvas Area */}
-        <div className="xl:col-span-8 flex flex-col gap-space-md">
-          {/* Architectural Canvas Container */}
-          <div
-            className={`relative bg-surface-container-lowest rounded-2xl shadow-sm overflow-hidden p-space-md sm:p-space-lg min-h-[760px] select-none border border-surface-container-high/30 transition-all ${
-              isHeatmap ? 'bg-amber-50/20' : ''
-            }`}
-            style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top left' }}
-          >
+        <div className="xl:col-span-8 flex flex-col gap-space-md w-full min-w-0">
+          {/* Architectural Canvas Container with Mobile Horizontal Scroll */}
+          <div className="w-full overflow-x-auto rounded-2xl shadow-sm border border-surface-container-high/30">
+            <div
+              className={`relative bg-surface-container-lowest p-space-md sm:p-space-lg min-h-[760px] min-w-[620px] lg:min-w-0 select-none transition-all ${
+                isHeatmap ? 'bg-amber-50/20' : ''
+              }`}
+              style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top left' }}
+            >
             {/* Architectural Grid Ambient Texture Overlay */}
             <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(#002043_1px,transparent_1px)] [background-size:20px_20px]" />
 
@@ -754,6 +755,7 @@ export const FindSeatPage = ({ onNavigate, onSelectSeatForBooking }) => {
                 <span>Real-time LiDAR Occupancy Sensors Synced • Updated 12s ago</span>
               </div>
             </div>
+          </div>
           </div>
         </div>
 

@@ -2,15 +2,54 @@
 
 > **Full-Stack Academic Sanctuary Library Management System**  
 > Designed from Google Stitch Project: *Library Seat Reservation Platform* (`projects/9107439051235603232`).  
-> Built with **React.js (Vite)**, **Tailwind CSS**, **Node.js (Express.js)**, and **MongoDB (Mongoose)** using pure JavaScript ES modules.
+> Built with **React.js (Vite)**, **Tailwind CSS**, **Node.js (Express.js)**, and **Supabase PostgreSQL**.
+
+---
+
+## 🌐 Live Production Deployments
+
+| Component | Platform | Deployment URL | Status |
+| :--- | :--- | :--- | :--- |
+| **Frontend Web App** | Vercel | [**https://a-seat-to-study.vercel.app**](https://a-seat-to-study.vercel.app) | 🟢 Live & Operational |
+| **Backend REST API** | Vercel Serverless | [**https://a-seat-to-study-api.vercel.app**](https://a-seat-to-study-api.vercel.app) | 🟢 Live & Operational |
+| **Cloud Database** | Supabase PostgreSQL | `rkfcnaetgtyguzbwwfgx.supabase.co` | 🟢 Cloud Connected |
+| **System Health Check** | REST Endpoint | [**https://a-seat-to-study-api.vercel.app/api/health**](https://a-seat-to-study-api.vercel.app/api/health) | 🟢 JSON Verified |
 
 ---
 
 ## 🏛️ Executive Summary
 
-**A Seat to Study** is an intelligent, full-stack library seat reservation and occupancy management web platform developed for modern university campuses. Addressing peak study hall congestion, desk hogging, and poor seat utilization during midterm and finals weeks, the platform integrates real-time environmental telemetry, visual 2D floor plans, an automated **15-minute fair-use grace period auto-release engine**, and granular role-based administrative auditing.
+**A Seat to Study** is an intelligent, full-stack library seat reservation and occupancy management web platform developed for modern university campuses (Lovely Professional University — LPU Central Library). Addressing study hall peak congestion, desk hogging, and poor space utilization during midterm and finals weeks, the platform integrates real-time environmental telemetry, visual 2D floor plans, an automated **15-minute fair-use grace period auto-release engine**, and granular role-based administrative auditing.
 
-Every visual token—from the deep academic primary green (`#1b3b2b`) and warm parchment backgrounds (`#fbf9f5`) to typography (Newsreader serif headers + Plus Jakarta Sans UI) and tactile micro-states—has been meticulously aligned with the **Google Stitch Academic Sanctuary** design specification.
+Every visual token—from the deep academic primary green (`#002043` / `#17365d`) and academic blues (`#0051d5`) to warm parchment background surfaces and tactile micro-states—is meticulously aligned with the **Google Stitch Academic Sanctuary** design specification.
+
+---
+
+## 📱 Mobile Responsiveness & Multi-Device Support
+
+The frontend is fully responsive and optimized for touch interactions across all viewport form factors:
+- **Small Mobile**: 320px (iPhone SE, narrow viewports)
+- **Standard Mobile**: 375px (iPhone 12/13 mini), 390px (iPhone 14/15), 430px (iPhone Pro Max)
+- **Tablets**: 768px (iPad Mini / Portrait), 1024px (iPad Pro)
+- **Desktop**: 1280px to 4K Ultra-Wide
+
+### Mobile UX Enhancements
+- **Collapsible Mobile Drawer**: Sleek slide-out hamburger navigation drawer with dark backdrop overlay that automatically closes upon navigation.
+- **Header Telemetry**: Responsive telemetry chips that gracefully adapt text on compact screens without horizontal overflow.
+- **Stacking Grid Cards**: 4-card metric summaries and split master-detail layouts that transition from single-column on mobile to asymmetric multi-column grids on desktop.
+- **Architectural Seat Map Pan**: Panning canvas with touch zoom and zone inspection that preserves blueprint fidelity on mobile screens.
+- **Responsive Charts**: 16-bar hourly occupancy forecast with horizontal swipe capability on narrow devices.
+- **Touch-Friendly Controls**: Minimum 44px tap targets for buttons, selectors, tabs, and modals.
+- **Viewport Meta Configuration**: Viewport meta tag configured with `viewport-fit=cover` for edge-to-edge mobile viewing.
+
+---
+
+## 🧭 Initial Landing Page Architecture
+
+Visitors opening the production URL ([https://a-seat-to-study.vercel.app](https://a-seat-to-study.vercel.app)) land directly on the **Main Dashboard**:
+- **Public Sanctuary Overview**: Visitors can explore real-time occupancy counts, 3-floor load breakdown, IoT sensor metrics (sound dB, temperature, air quality), and study tips without mandatory login.
+- **Contextual Actions**: The prominent **"Book a New Seat"** and **"Floor Heatmap"** buttons provide immediate access to the interactive floor map and booking wizard.
+- **Dedicated Authentication**: Sign In (`/login`) and Enrollment (`/register`) are accessible separately via the top navigation and sidebar, maintaining session privacy for personal bookings and administrative consoles.
 
 ---
 
@@ -25,12 +64,12 @@ Every visual token—from the deep academic primary green (`#1b3b2b`) and warm p
 ### 2. 🗺️ Interactive Library Seat Map & Telemetry
 - **Visual 2D Floor Plan (Level 02)**: Complete architectural canvas mirroring Google Stitch Screen `e5470d0cf6324e93bb222cf61a5b889e`.
 - **4 Dedicated Study Zones**:
-  - 🌿 *Atrium (Silent Focus)*: Deep study, individual carrels with acoustic felt screens.
-  - 🌅 *North Terraces (Collaborative)*: Dual 4K display workstations with natural daylight.
-  - 🏛️ *West Wing (Quiet Carrels)*: Natural light window desks with ergonomic seating.
-  - 📚 *Archive Mezzanine (Research Pods)*: Enclosed pods with whiteboard walls and sound isolation.
+  - 🌿 *Zone A • Silent Study Pods (North Wing)*: Deep study, individual pods with acoustic glass (<32 dB).
+  - 💻 *Zone D • Dual-Monitor Tech Stations (East Wing)*: Dual 4K workstations with 100W USB-C PD.
+  - 🏛️ *Zone B • Collaborative Study Hub (Center Atrium)*: Group tables, natural light, and glass whiteboards.
+  - 🌅 *Zone C • Window Panorama Bar (South Glass Curtain)*: High bar counter with campus lawn view.
 - **Environmental Telemetry**: Live IoT monitoring displaying Ambient Sound (dB), Temperature (°C), Air Quality Index (AQI), and Natural Sunlight percentage.
-- **Dynamic Desk Filtering**: Instant filtering by Zone, Amenity (Dual Monitors, Height Adjustable, Power Outlets, Natural Light, Ergonomic Chair), and Seat Status (*Available*, *Occupied*, *Reserved*, *Maintenance*).
+- **Dynamic Desk Filtering**: Instant filtering by Zone, Amenity (Dual Monitors, Power Outlets, Natural Light, Ergonomic Chair), and Seat Status (*Available*, *Occupied*, *Reserved*, *Offline*).
 
 ### 3. ⏱️ Seat Reservation & 15-Minute Fair Use Grace Flow
 - **3-Step Reservation Wizard**:
@@ -66,233 +105,59 @@ Every visual token—from the deep academic primary green (`#1b3b2b`) and warm p
 ```
                         ┌─────────────────────────────────────────┐
                         │          React.js Client (Vite)          │
+                        │  - Deployed on Vercel                   │
                         │  - Tailwind CSS (Academic Sanctuary)   │
-                        │  - Context API (Auth & Notifications)   │
-                        │  - Responsive & Mobile Optimized        │
+                        │  - Responsive (320px to Desktop 4K)     │
+                        │  - Live at: a-seat-to-study.vercel.app  │
                         └────────────────────┬────────────────────┘
                                              │ HTTP / REST (Fetch)
                                              ▼
                         ┌─────────────────────────────────────────┐
-                        │         Node.js / Express.js API        │
+                        │       Node.js / Express.js Backend      │
+                        │  - Deployed on Vercel Serverless        │
                         │  - JWT Bearer Authentication            │
-                        │  - Grace Period Automated Engine        │
+                        │  - 15-Minute Grace Auto-Release Engine  │
                         │  - CORS & Global Error Handling         │
-                        └──────────────┬──────────────────────────┘
-                                       │
-                ┌──────────────────────┴──────────────────────┐
-                ▼                                             ▼
-┌───────────────────────────────┐             ┌───────────────────────────────┐
-│     MongoDB Atlas (Mongoose)  │             │   High-Performance In-Memory  │
-│  - User & Role Model          │             │   Development Store (Fallback)│
-│  - Seat & Zone Model          │             │  - Zero setup instant testing │
-│  - Reservation Model          │             │  - 70 pre-seeded Level 02 des-│
-│  - TelemetryLog Model         │             │    ks, sensors, & demo records│
-└───────────────────────────────┘             └───────────────────────────────┘
+                        └────────────────────┬────────────────────┘
+                                             │ @supabase/supabase-js
+                                             ▼
+                        ┌─────────────────────────────────────────┐
+                        │         Supabase PostgreSQL DB          │
+                        │  - Managed Cloud Relational Database    │
+                        │  - Users, Seats, Reservations, Logs     │
+                        │  - Foreign Keys, Indexes & RLS Policies │
+                        └─────────────────────────────────────────┘
 ```
 
-- **Frontend**: React 18, Vite 6, Tailwind CSS 3, Lucide React & Google Material Symbols.
-- **Backend**: Node.js 20+, Express.js 4, Mongoose 8, JSONWebToken, BcryptJS, Dotenv, CORS.
-- **Database**: MongoDB (with seamless auto-fallback to pre-seeded in-memory store if Atlas connection is not configured).
+- **Frontend**: React 18, Vite 6, Tailwind CSS 3, Google Material Symbols, Inter & Plus Jakarta Sans fonts.
+- **Backend**: Node.js 20+, Express.js 4, `@supabase/supabase-js`, JSONWebToken, BcryptJS, Dotenv, CORS.
+- **Database**: Supabase PostgreSQL Cloud with automatic resilience adapters.
 
 ---
 
 ## 🎨 Google Stitch Design System Tokens
 
-The application strictly implements the design tokens extracted from Google Stitch:
-
 | Token Name | Hex Code | Visual Application |
 | :--- | :--- | :--- |
-| **Primary Deep Forest** | `#1b3b2b` | Primary navigation, hero CTA buttons, active state indicators |
-| **Primary Container** | `#2d5a43` | Badges, hover highlights, active tab indicators |
-| **Warm Parchment** | `#fbf9f5` | Page background, serene academic atmosphere |
-| **Muted Surface** | `#f3efe6` | Cards, secondary buttons, input field containers |
-| **Academic Amber** | `#c28b26` | Live reservations, countdown timers, warning alerts |
-| **Occupancy Terracotta** | `#d9534f` | Occupied desks, high noise sensor warnings, penalty alerts |
-| **Serene Accent** | `#e8f0eb` | Available desk chips, subtle border outlines |
-| **Muted Slate** | `#64748b` | Subheadings, timestamps, secondary metadata |
+| **Primary Navy** | `#002043` | Primary navigation, hero CTA buttons, active state indicators |
+| **Primary Container** | `#17365d` | Brand header badges, card accents, active tab indicators |
+| **Secondary Accent** | `#0051d5` | Active focus highlights, primary action buttons, live indicators |
+| **Warm Surface** | `#f8f9ff` | Background surface, serene academic atmosphere |
+| **Surface Lowest** | `#ffffff` | Elevated cards, forms, input containers |
+| **Status Available** | `#22c55e` | Available desk chips, verified check-in badges |
+| **Status Occupied** | `#ef4444` | Occupied workstations, active alerts |
+| **Status Reserved** | `#3b82f6` | 15-minute grace period holds, confirmed passes |
 
 ---
 
-## 📂 Repository Directory Layout
+## 🔑 Demo Credentials
 
-```
-A Seat to Study/
-├── package.json                   # Root coordination scripts
-├── .gitignore                     # Root git ignore (node_modules, .env, build artifacts)
-├── README.md                      # Comprehensive platform handbook
-│
-├── frontend/                      # React.js Client (Vite + Tailwind CSS)
-│   ├── .env                       # Frontend environment variables (VITE_API_BASE_URL)
-│   ├── .env.example               # Template for environment configuration
-│   ├── package.json               # Frontend dependencies & build commands
-│   ├── vite.config.js             # Vite bundler configuration
-│   ├── tailwind.config.js         # Stitch Academic Sanctuary theme tokens
-│   ├── index.html                 # App shell with Newsreader & Plus Jakarta fonts
-│   └── src/
-│       ├── main.jsx               # React DOM hydration root
-│       ├── App.jsx                # Application routing & active view switcher
-│       ├── index.css              # Tailwind layer directives & custom utility classes
-│       ├── context/
-│       │   └── AuthContext.jsx    # Authentication & user session context provider
-│       ├── components/
-│       │   ├── common/            # Design system primitives (Button, Badge, Card, Input)
-│       │   ├── layout/            # App shell (Sidebar, Header, AppLayout)
-│       │   ├── map/               # Interactive 2D Seat Map & Zone filters
-│       │   └── booking/           # Digital Pass Modal with simulated RFID scanner
-│       ├── pages/
-│       │   ├── LoginPage.jsx      # Student & Admin sign-in
-│       │   ├── RegisterPage.jsx   # New student enrollment
-│       │   ├── DashboardPage.jsx  # Primary student analytics & quick-booking
-│       │   ├── FindSeatPage.jsx   # Interactive Level 02 floor plan & telemetry
-│       │   ├── SeatBookingPage.jsx# 3-step reservation workflow & quota check
-│       │   ├── MyBookingsPage.jsx # Active & past reservations with pass launcher
-│       │   └── AdminPortalPage.jsx# Library staff control center & turnstile toggles
-│       └── services/
-│           ├── api.js             # Centralized HTTP request service
-│           └── seatService.js     # Seat & telemetry client helpers
-│
-└── backend/                       # Node.js + Express.js API Server
-    ├── .env                       # Backend environment variables (PORT, MONGO_URI, JWT)
-    ├── .env.example               # Template for backend secrets
-    ├── package.json               # Backend dependencies & test scripts
-    ├── test-master.js             # 18-step automated end-to-end integration test suite
-    └── src/
-        ├── server.js              # Express app bootstrap & HTTP listener
-        ├── config/
-        │   └── db.js              # Mongoose MongoDB connection manager
-        ├── middleware/
-        │   ├── auth.js            # JWT verification & role authorization guards
-        │   └── errorHandler.js    # Standardized JSON error response handler
-        ├── models/
-        │   ├── User.js            # Student/Admin schema with bcrypt password hashing
-        │   ├── Seat.js            # Library desk schema with sensor telemetry & status
-        │   ├── Reservation.js     # Booking schema with 15-min grace timestamp
-        │   └── TelemetryLog.js    # Floor noise/light/occupancy sensor schema
-        ├── controllers/
-        │   ├── auth.controller.js # Auth, registration, and mock user store
-        │   ├── seat.controller.js # 70-seat inventory, zone metrics, & telemetry
-        │   ├── reservation.controller.js # Booking creation, RFID check-in, grace sweep
-        │   └── admin.controller.js# Master facility metrics, strikes, CSV export
-        └── routes/
-            ├── index.js           # Central API router mounting all endpoints
-            ├── auth.routes.js     # /api/auth
-            ├── seat.routes.js     # /api/seats
-            ├── reservation.routes.js # /api/reservations
-            └── admin.routes.js    # /api/admin
-```
-
----
-
-## 🚀 Quick Start Guide
-
-### Prerequisites
-- **Node.js** (v18.0.0 or higher)
-- **npm** (v9.0.0 or higher)
-
-### 1. Installation
-In the project root directory, install all dependencies:
-```bash
-# Install backend dependencies
-cd backend
-npm install
-
-# Install frontend dependencies
-cd ../frontend
-npm install
-```
-
-### 2. Environment Configuration
-Both `backend/.env` and `frontend/.env` have been created with production-safe defaults for development.
-
-- **Backend Configuration (`backend/.env`)**:
-  ```env
-  PORT=5000
-  NODE_ENV=development
-  CLIENT_URL=http://localhost:5173
-  JWT_SECRET=super_secret_study_sanctuary_jwt_token_2025_key
-  MONGODB_URI=mongodb://localhost:27017/a-seat-to-study
-  ```
-  *(Note: If a local or Atlas MongoDB connection is not detected, the backend automatically transitions to its built-in in-memory store pre-populated with 70 desks, live telemetry, and active reservations!)*
-
-- **Frontend Configuration (`frontend/.env`)**:
-  ```env
-  VITE_API_BASE_URL=http://localhost:5000/api
-  ```
-
-### 3. Launch Development Servers
-Open two terminal windows:
-
-**Terminal 1 (Backend API):**
-```bash
-cd backend
-npm run dev
-# Running on: http://localhost:5000
-# Health check: http://localhost:5000/api/health
-```
-
-**Terminal 2 (Frontend Client):**
-```bash
-cd frontend
-npm run dev
-# Running on: http://localhost:5173
-```
-
----
-
-## 🔑 Demo Login Credentials
-
-For quick evaluation and demonstrations, use the following pre-configured university accounts:
-
-| Role | Username / Email | Password | Features Accessible |
+| Role | Identifier | Password | Access Scope |
 | :--- | :--- | :--- | :--- |
-| **Student** | `ankit@lpu.in`<br>*(or ID: `12513583` / `student@campus.edu`)* | `password123`<br>*(or `StudySanctuary2025#`)* | Student Dashboard, Interactive Seat Map, 3-Step Booking, My Bookings, Digital RFID Pass, Desk Extension |
-| **Admin** | `admin@library.campus.edu`<br>*(or `admin@library.univ.edu` / `ADMIN-001`)* | `password123`<br>*(or `StudySanctuary2025#`)* | Operations Overview, Turnstile Gate Toggles, Desk Status Override, Student Strike Waiver, CSV Audit Export |
+| **Student** | `ankit@lpu.in`<br>*(or ID: `12513583`)* | `StudySanctuary2025#`<br>*(or `password123`)* | Dashboard, Interactive Floor Map, 3-Step Booking Wizard, My Bookings, Digital RFID Pass, Desk Extension |
+| **Admin** | `admin@library.univ.edu`<br>*(or ID: `ADMIN-001`)* | `StudySanctuary2025#`<br>*(or `admin123`)* | Operations Overview, Turnstile Controls, Desk Overrides, Student Strike Waivers, CSV Audit Export |
 
-*You can also use the **Quick Demo Switcher** pills located directly on the Login page (`LoginPage.jsx`) for instant 1-click authentication!*
-
----
-
-## 🧪 Automated Testing & Verification
-
-The project includes an end-to-end integration test runner validating all 18 backend endpoints and workflows:
-
-```bash
-cd backend
-npm test
-```
-
-### Test Coverage (18 / 18 Passed - 100%):
-- **Group 1: System Health**
-  - ✅ Health Check (`GET /api/health`)
-- **Group 2: Authentication & Roles**
-  - ✅ Student Login (`POST /api/auth/login`)
-  - ✅ Admin Privileged Login (`POST /api/auth/login`)
-- **Group 3: Seats & Telemetry**
-  - ✅ Level 02 70-Desk Inventory (`GET /api/seats`)
-  - ✅ Single Desk Details (`GET /api/seats/B07`)
-  - ✅ Real-time Floor Telemetry (`GET /api/seats/telemetry?floor=2`)
-- **Group 4: Reservations & 15-Minute Grace Period**
-  - ✅ Create Reservation & Issue Digital Pass (`POST /api/reservations`)
-  - ✅ Retrieve Student Active & Historical Bookings (`GET /api/reservations/my`)
-  - ✅ RFID & QR Pass Check-In Verification (`PATCH /api/reservations/:id/check-in`)
-  - ✅ Extend Active Study Reservation (`PATCH /api/reservations/:id/extend`)
-  - ✅ 15-Minute Grace Auto-Release Sweep (`POST /api/reservations/sweep-grace-expired`)
-- **Group 5: Student Quota & Analytics**
-  - ✅ Student Dashboard Analytics & Balance (`GET /api/reservations/analytics`)
-- **Group 6: Admin Operations & Controls**
-  - ✅ Facility Telemetry & Peak Projection (`GET /api/admin/overview`)
-  - ✅ Master Student Bookings Audit List (`GET /api/admin/bookings`)
-  - ✅ Desk Status Override (`PATCH /api/admin/seats/:seatNumber/status`)
-  - ✅ Student Conduct Strike Waiver & Account Pardon (`PATCH /api/admin/students/:studentId/waive-strike`)
-  - ✅ Turnstile Gate Toggle (`POST /api/admin/turnstiles/:gateId/toggle`)
-  - ✅ Daily Operations CSV Audit Log Export (`GET /api/admin/export/audit.csv`)
-
-### Production Frontend Build Verification:
-```bash
-cd frontend
-npm run build
-# Compiles all 40 modules into /dist with 0 warnings or errors in ~10 seconds.
-```
+*You can also use the **Phase Switcher** located at the bottom of the screen to preview any workflow instantly.*
 
 ---
 
@@ -300,8 +165,8 @@ npm run build
 
 | Method | Endpoint | Access | Description |
 | :--- | :--- | :--- | :--- |
-| `GET` | `/api/health` | Public | System uptime, version, and database connection state |
-| `POST` | `/api/auth/register` | Public | Register new student profile with RFID badge ID |
+| `GET` | `/api/health` | Public | System uptime, version, and Supabase connection state |
+| `POST` | `/api/auth/register` | Public | Register new student profile in Supabase PostgreSQL |
 | `POST` | `/api/auth/login` | Public | Authenticate using Email or Student ID, issue JWT |
 | `GET` | `/api/auth/me` | Protected | Fetch authenticated user profile & quota balance |
 | `GET` | `/api/seats` | Public | Retrieve Level 02 desks with zone & status filters |
@@ -322,16 +187,19 @@ npm run build
 
 ---
 
-## 🎓 Academic Presentation & Demo Checklist
+## 🧪 Automated Testing & Build Verification
 
-When demonstrating this project to professors, review committees, or peers:
-1. **Introduction**: Highlight the problem statement (crowded study halls, ghost bookings, unfair desk reservations).
-2. **Design Fidelity**: Show the side-by-side alignment with the Google Stitch *Academic Sanctuary* design specification.
-3. **Interactive 2D Seat Map**: Navigate to Level 02 floor plan; filter by *Silent Focus* zone and toggle *Dual 4K Monitors*.
-4. **Reservation Workflow**: Select desk `B07`, pick a 2-hour study slot, choose *Individual Study*, and generate the Digital Pass.
-5. **15-Minute Grace Policy**: Open *My Bookings*, show the countdown timer and policy banner, and click **Tap Virtual RFID Card** to simulate in-person physical check-in.
-6. **Student Quota**: Point out the remaining balance out of 25.0 weekly hours and the 16-bar hourly crowd forecast.
-7. **Admin Portal**: Log in as Admin (`admin@campus.edu`), review facility capacity gauges, toggle Turnstile Gate 01 to *LOCKED_OVERFLOW*, waive a student strike, and click **Export Audit CSV** to demonstrate operational compliance.
+### Backend Integration Tests (22 / 22 Passed):
+```bash
+node backend/test-migration.js
+# Validates health, auth, seats, reservations, RFID check-in, auto-sweep, and admin endpoints.
+```
+
+### Frontend Production Build:
+```bash
+npm --prefix frontend run build
+# Compiles all modules into /dist with 0 errors in ~13 seconds.
+```
 
 ---
 

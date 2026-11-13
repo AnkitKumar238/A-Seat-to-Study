@@ -9,12 +9,24 @@
     background-color: #f8f9ff;
     color: #0b1c30;
     font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+    width: 100%;
+    -webkit-tap-highlight-color: transparent;
   }
 
   /* Stitch Academic Sanctuary Tabular Numbers Rule */
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
+}
+
+/* Hide scrollbar for clean touch carousels and strips */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
 /* Material Symbols alignment helper */

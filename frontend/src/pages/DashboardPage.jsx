@@ -279,11 +279,11 @@ export function DashboardPage({ onNavigate }) {
         </div>
 
         {/* Quick CTA Cluster */}
-        <div className="flex items-center gap-space-sm shrink-0">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-space-sm w-full md:w-auto shrink-0">
           <button
             type="button"
             onClick={() => onNavigate && onNavigate('find-a-seat')}
-            className="inline-flex items-center gap-2 px-space-md py-2.5 rounded-lg bg-secondary text-on-secondary font-title-md text-title-md shadow-md hover:bg-primary-container transition-all cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 px-space-md py-2.5 rounded-lg bg-secondary text-on-secondary font-title-md text-title-md shadow-md hover:bg-primary-container transition-all cursor-pointer min-h-[44px]"
           >
             <span className="material-symbols-outlined text-[20px]">add_location_alt</span>
             Book a New Seat
@@ -291,7 +291,7 @@ export function DashboardPage({ onNavigate }) {
           <button
             type="button"
             onClick={() => onNavigate && onNavigate('find-a-seat')}
-            className="inline-flex items-center gap-2 px-space-md py-2.5 rounded-lg bg-surface-container-lowest text-on-surface font-title-md text-title-md shadow-xs border border-surface-container-high hover:bg-surface-container transition-colors cursor-pointer"
+            className="inline-flex items-center justify-center gap-2 px-space-md py-2.5 rounded-lg bg-surface-container-lowest text-on-surface font-title-md text-title-md shadow-xs border border-surface-container-high hover:bg-surface-container transition-colors cursor-pointer min-h-[44px]"
           >
             <span className="material-symbols-outlined text-[20px] text-secondary">heat_pump</span>
             Floor Heatmap
@@ -504,53 +504,55 @@ export function DashboardPage({ onNavigate }) {
 
             {/* Occupancy Bar Chart Visualization */}
             <div className="space-y-2 mb-space-lg">
-              <div className="h-44 w-full flex items-end gap-2 sm:gap-3.5 pt-6 pb-2 px-1">
-                {analytics.hourlyForecast.map((bar) => {
-                  const isCurrent = bar.isCurrent;
-                  const isPeak = bar.isPeak;
-                  return (
-                    <div
-                      key={bar.hour}
-                      className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group relative"
-                    >
-                      {isPeak && (
-                        <span className="absolute -top-4 font-label-sm text-[9px] px-1 rounded bg-error-container text-on-error-container font-semibold uppercase tracking-wider">
-                          Peak
-                        </span>
-                      )}
-                      <span
-                        className={`font-label-sm text-[10px] transition-opacity ${
-                          isCurrent
-                            ? 'text-secondary font-bold opacity-100'
-                            : 'text-on-surface-variant opacity-0 group-hover:opacity-100'
-                        }`}
-                      >
-                        {bar.percent}%
-                      </span>
+              <div className="w-full overflow-x-auto pb-2 -mx-1 px-1 sm:overflow-visible">
+                <div className="h-44 min-w-[500px] sm:min-w-0 w-full flex items-end gap-1.5 sm:gap-3.5 pt-6 pb-2 px-1">
+                  {analytics.hourlyForecast.map((bar) => {
+                    const isCurrent = bar.isCurrent;
+                    const isPeak = bar.isPeak;
+                    return (
                       <div
-                        className={`w-full rounded-t-md transition-all ${
-                          isCurrent
-                            ? 'bg-secondary shadow-md'
-                            : isPeak
-                            ? 'bg-primary-container hover:bg-secondary'
-                            : 'bg-surface-container hover:bg-secondary-container'
-                        }`}
-                        style={{ height: `${bar.percent}%` }}
-                      />
-                      <span
-                        className={`font-tabular-numeric text-tabular-numeric text-[11px] ${
-                          isCurrent
-                            ? 'text-secondary font-bold'
-                            : isPeak
-                            ? 'text-primary font-bold'
-                            : 'text-on-surface-variant'
-                        }`}
+                        key={bar.hour}
+                        className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group relative"
                       >
-                        {bar.hour}
-                      </span>
-                    </div>
-                  );
-                })}
+                        {isPeak && (
+                          <span className="absolute -top-4 font-label-sm text-[9px] px-1 rounded bg-error-container text-on-error-container font-semibold uppercase tracking-wider">
+                            Peak
+                          </span>
+                        )}
+                        <span
+                          className={`font-label-sm text-[10px] transition-opacity ${
+                            isCurrent
+                              ? 'text-secondary font-bold opacity-100'
+                              : 'text-on-surface-variant opacity-0 group-hover:opacity-100'
+                          }`}
+                        >
+                          {bar.percent}%
+                        </span>
+                        <div
+                          className={`w-full rounded-t-md transition-all ${
+                            isCurrent
+                              ? 'bg-secondary shadow-md'
+                              : isPeak
+                              ? 'bg-primary-container hover:bg-secondary'
+                              : 'bg-surface-container hover:bg-secondary-container'
+                          }`}
+                          style={{ height: `${bar.percent}%` }}
+                        />
+                        <span
+                          className={`font-tabular-numeric text-tabular-numeric text-[11px] ${
+                            isCurrent
+                              ? 'text-secondary font-bold'
+                              : isPeak
+                              ? 'text-primary font-bold'
+                              : 'text-on-surface-variant'
+                          }`}
+                        >
+                          {bar.hour}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 

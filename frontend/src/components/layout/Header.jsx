@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 
 const AVATAR_URL =
@@ -8,11 +8,13 @@ export function Header({
   searchQuery = '',
   onSearchChange,
   occupancyPercent = 74,
-  libraryName = 'LPU Central Library (Lovely Professional University)',
+  libraryName = 'LPU Central Library',
   onNavigate,
+  onToggleMobileMenu,
 }) {
-  const { user, logout, isAdmin } = useAuth();
+  const { user, isAuthenticated, logout, isAdmin, quickDemoLogin } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const menuRef = useRef(null);
 
   const studentName = user?.name || 'Ankit';
   const studentId = user?.studentId || '12513583';
@@ -20,24 +22,52 @@ export function Header({
   const quotaHours = user?.weeklyQuotaHours || 25.0;
   const usedHours = user?.usedQuotaHours || 8.5;
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowProfileMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const handleLogout = async () => {
     setShowProfileMenu(false);
     await logout();
-    if (onNavigate) onNavigate('login');
+    if (onNavigate) onNavigate('dashboard');
+  };
+
+  const handleNavigateItem = (route) => {
+    setShowProfileMenu(false);
+    if (onNavigate) onNavigate(route);
   };
 
   return (
-    <header className="fixed top-0 left-64 right-0 h-16 bg-surface/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 px-space-lg flex items-center justify-between border-b border-outline-variant/20">
-      {/* Left Telemetry Cluster */}
-      <div className="flex items-center gap-space-lg">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-low text-on-surface">
-          <span className="h-2 w-2 rounded-full bg-secondary animate-pulse" />
-          <span className="font-label-md text-label-md font-medium text-on-surface">
+    <header className="fixed top-0 left-0 lg:left-64 right-0 h-16 bg-surface/95 backdrop-blur-xl shadow-xs z-40 px-2 sm:px-space-md lg:px-space-lg flex items-center justify-between border-b border-outline-variant/20">
+      {/* Left Cluster: Mobile Hamburger + Telemetry */}
+      <div className="flex items-center gap-1.5 sm:gap-space-md min-w-0">
+        {/* Mobile Hamburger Button */}
+        <button
+          type="button"
+          onClick={onToggleMobileMenu}
+          aria-label="Open navigation menu"
+          className="lg:hidden p-2 rounded-lg text-primary hover:bg-surface-container active:scale-95 transition-all cursor-pointer flex items-center justify-center min-w-[40px] min-h-[40px] shrink-0"
+        >
+          <span className="material-symbols-outlined text-[24px]">menu</span>
+        </button>
+
+        {/* Telemetry Badge */}
+        <div className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-surface-container-low text-on-surface text-xs sm:text-sm min-w-0">
+          <span className="h-2 w-2 rounded-full bg-secondary animate-pulse shrink-0" />
+          <span className="font-label-md font-medium text-on-surface truncate max-w-[110px] xs:max-w-[150px] sm:max-w-[220px] md:max-w-none">
             {libraryName}
           </span>
-          <span className="text-outline-variant text-label-sm font-label-sm">•</span>
-          <span className="font-tabular-numeric text-tabular-numeric text-on-surface-variant font-semibold">
-            {occupancyPercent}% Occupied
+          <span className="text-outline-variant text-label-sm font-label-sm hidden xs:inline">•</span>
+          <span className="font-tabular-numeric text-tabular-numeric text-on-surface-variant font-semibold shrink-0">
+            {occupancyPercent}%
+            <span className="hidden sm:inline"> Occupied</span>
           </span>
         </div>
 
@@ -49,125 +79,152 @@ export function Header({
         </div>
       </div>
 
-      {/* Right Controls Cluster */}
-      <div className="flex items-center gap-space-md">
-        {/* Search Input */}
+      {/* Right Cluster: Search, Notifications & Profile/Auth */}
+      <div className="flex items-center gap-1.5 sm:gap-space-sm md:gap-space-md shrink-0">
+        {/* Search Input (Collapsible/Scaled on Small Viewports) */}
         <div className="relative flex items-center">
-          <span className="material-symbols-outlined absolute left-3 text-on-surface-variant text-[18px] pointer-events-none">
+          <span className="material-symbols-outlined absolute left-2.5 sm:left-3 text-on-surface-variant text-[16px] sm:text-[18px] pointer-events-none">
             search
           </span>
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange && onSearchChange(e.target.value)}
-            placeholder="Search Seat ID (e.g. B07)..."
-            className="w-60 h-9 pl-9 pr-3 rounded-lg bg-surface-container-lowest text-on-surface placeholder:text-on-surface-variant font-body-sm text-body-sm outline-none focus:ring-2 focus:ring-secondary/20 border border-outline-variant/30 transition-all"
+            placeholder="Search seat..."
+            className="w-24 xs:w-28 sm:w-44 md:w-56 lg:w-60 h-9 pl-8 sm:pl-9 pr-2 sm:pr-3 rounded-lg bg-surface-container-lowest text-on-surface placeholder:text-on-surface-variant font-body-sm text-xs sm:text-sm outline-none focus:ring-2 focus:ring-secondary/20 border border-outline-variant/30 transition-all"
+            aria-label="Search seat"
           />
         </div>
 
-        {/* Notifications */}
+        {/* Notifications (Desktop / Tablet) */}
         <button
+          type="button"
+          onClick={() => onNavigate && onNavigate('notifications')}
           aria-label="Notifications"
-          className="relative p-2 rounded-full text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors cursor-pointer"
+          className="relative p-2 rounded-full text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors cursor-pointer hidden sm:flex items-center justify-center min-w-[36px] min-h-[36px]"
         >
-          <span className="material-symbols-outlined text-[22px]">notifications</span>
+          <span className="material-symbols-outlined text-[20px] sm:text-[22px]">notifications</span>
           <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-error text-on-error font-label-sm text-[10px] font-bold">
             3
           </span>
         </button>
 
-        <div className="h-8 w-[1px] bg-surface-container-high mx-1" />
+        <div className="h-6 sm:h-8 w-[1px] bg-surface-container-high mx-0.5 sm:mx-1 hidden xs:block" />
 
-        {/* User Profile Chip with Dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="flex items-center gap-space-sm pl-1 pr-2 py-1 rounded-lg hover:bg-surface-container cursor-pointer transition-colors text-left"
-          >
-            <img
-              alt={studentName}
-              className="w-8 h-8 rounded-full object-cover border border-outline-variant/40"
-              src={AVATAR_URL}
-            />
-            <div className="flex flex-col text-left">
-              <span className="font-label-md text-label-md text-on-surface leading-tight font-semibold flex items-center gap-1.5">
-                {studentName}
-                {isAdmin && (
-                  <span className="px-1.5 py-0.2 bg-primary text-on-primary text-[10px] font-bold rounded">
-                    ADMIN
-                  </span>
-                )}
+        {/* Authenticated Profile or Guest Sign-In CTAs */}
+        {isAuthenticated ? (
+          <div className="relative" ref={menuRef}>
+            <button
+              type="button"
+              onClick={() => setShowProfileMenu((prev) => !prev)}
+              className="flex items-center gap-1.5 sm:gap-space-sm pl-1 pr-1.5 sm:pr-2 py-1 rounded-lg hover:bg-surface-container cursor-pointer transition-colors text-left min-h-[40px]"
+              aria-label="User profile menu"
+            >
+              <img
+                alt={studentName}
+                className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-outline-variant/40 shrink-0"
+                src={AVATAR_URL}
+              />
+              <div className="hidden md:flex flex-col text-left">
+                <span className="font-label-md text-label-md text-on-surface leading-tight font-semibold flex items-center gap-1.5">
+                  <span className="truncate max-w-[120px]">{studentName}</span>
+                  {isAdmin && (
+                    <span className="px-1.5 py-0.2 bg-primary text-on-primary text-[10px] font-bold rounded">
+                      ADMIN
+                    </span>
+                  )}
+                </span>
+                <span className="font-tabular-numeric text-[11px] text-on-surface-variant">
+                  ID: {studentId}
+                </span>
+              </div>
+              <span className="material-symbols-outlined text-[16px] text-on-surface-variant hidden md:inline">
+                {showProfileMenu ? 'expand_less' : 'expand_more'}
               </span>
-              <span className="font-label-sm text-[11px] text-on-surface-variant leading-tight truncate max-w-[150px]">
-                ID: {studentId}
-              </span>
-            </div>
-            <span className="material-symbols-outlined text-on-surface-variant text-[18px]">
-              {showProfileMenu ? 'expand_less' : 'expand_more'}
-            </span>
-          </button>
+            </button>
 
-          {/* Profile Popover / Dropdown Menu */}
-          {showProfileMenu && (
-            <div className="absolute right-0 mt-2 w-72 bg-surface-container-lowest rounded-xl shadow-xl border border-outline-variant/30 py-space-sm z-50">
-              <div className="px-space-md py-space-xs border-b border-surface-container-high/40 pb-space-sm">
-                <p className="font-title-md text-body-md font-bold text-primary">{studentName}</p>
-                <p className="font-body-sm text-body-sm text-on-surface-variant">{user?.email || 'ankit@lpu.in'}</p>
-                <div className="mt-2 flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded-full bg-surface-container text-secondary text-[11px] font-semibold">
-                    {user?.role || 'STUDENT'}
-                  </span>
-                  <span className="text-[11px] text-outline font-tabular-numeric">
-                    Quota: {usedHours} / {quotaHours} hrs
+            {/* Profile Dropdown Menu */}
+            {showProfileMenu && (
+              <div className="absolute right-0 mt-2 w-72 rounded-2xl bg-surface-container-lowest shadow-2xl border border-outline-variant/30 py-2 z-50 animate-fadeIn">
+                <div className="px-4 py-3 border-b border-surface-container-high">
+                  <p className="font-title-md text-title-md text-primary font-bold">{studentName}</p>
+                  <p className="font-body-sm text-body-sm text-on-surface-variant font-mono">ID: {studentId}</p>
+                  <p className="font-label-sm text-[11px] text-on-surface-variant mt-1 line-clamp-1">{studentDept}</p>
+                </div>
+
+                <div className="px-4 py-2.5 bg-surface-container-low border-b border-surface-container-high flex items-center justify-between">
+                  <span className="font-label-sm text-label-sm text-on-surface-variant">Weekly Focus Quota</span>
+                  <span className="font-tabular-numeric text-label-sm font-bold text-secondary">
+                    {usedHours}h / {quotaHours}h
                   </span>
                 </div>
-              </div>
 
-              <div className="py-1">
-                <button
-                  onClick={() => {
-                    setShowProfileMenu(false);
-                    if (onNavigate) onNavigate('profile');
-                  }}
-                  className="w-full flex items-center gap-space-sm px-space-md py-2 text-on-surface-variant hover:bg-surface-container text-left text-label-md"
-                >
-                  <span className="material-symbols-outlined text-[18px]">person</span>
-                  <span>My Student Profile</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setShowProfileMenu(false);
-                    if (onNavigate) onNavigate('my-bookings');
-                  }}
-                  className="w-full flex items-center gap-space-sm px-space-md py-2 text-on-surface-variant hover:bg-surface-container text-left text-label-md"
-                >
-                  <span className="material-symbols-outlined text-[18px]">event_available</span>
-                  <span>Active Bookings</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setShowProfileMenu(false);
-                    if (onNavigate) onNavigate('login');
-                  }}
-                  className="w-full flex items-center gap-space-sm px-space-md py-2 text-on-surface-variant hover:bg-surface-container text-left text-label-md"
-                >
-                  <span className="material-symbols-outlined text-[18px]">swap_horiz</span>
-                  <span>Switch User / Relogin</span>
-                </button>
-              </div>
+                <div className="py-1">
+                  <button
+                    type="button"
+                    onClick={() => handleNavigateItem('dashboard')}
+                    className="w-full px-4 py-2 text-left font-label-md text-label-md text-on-surface hover:bg-surface-container flex items-center gap-2 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">grid_view</span>
+                    <span>Dashboard</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleNavigateItem('my-bookings')}
+                    className="w-full px-4 py-2 text-left font-label-md text-label-md text-on-surface hover:bg-surface-container flex items-center gap-2 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">event_available</span>
+                    <span>My Bookings &amp; Passes</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleNavigateItem('find-a-seat')}
+                    className="w-full px-4 py-2 text-left font-label-md text-label-md text-on-surface hover:bg-surface-container flex items-center gap-2 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">pin_drop</span>
+                    <span>Interactive Floor Map</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleNavigateItem('admin-portal')}
+                    className="w-full px-4 py-2 text-left font-label-md text-label-md text-on-surface hover:bg-surface-container flex items-center gap-2 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">admin_panel_settings</span>
+                    <span>Admin Operations Portal</span>
+                  </button>
+                </div>
 
-              <div className="border-t border-surface-container-high/40 pt-1 mt-1">
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-space-sm px-space-md py-2 text-error hover:bg-error-container text-left text-label-md font-semibold cursor-pointer"
-                >
-                  <span className="material-symbols-outlined text-[18px]">logout</span>
-                  <span>Sign Out of Portal</span>
-                </button>
+                <div className="border-t border-surface-container-high pt-1">
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="w-full px-4 py-2 text-left font-label-md text-label-md text-error hover:bg-error-container flex items-center gap-2 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">logout</span>
+                    <span>Logout</span>
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <button
+              type="button"
+              onClick={() => onNavigate && onNavigate('login')}
+              className="px-2.5 sm:px-3 py-1.5 text-xs font-semibold text-primary hover:bg-surface-container rounded-lg transition-colors cursor-pointer min-h-[36px] flex items-center"
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => onNavigate && onNavigate('register')}
+              className="px-2.5 sm:px-3 py-1.5 text-xs font-semibold bg-secondary text-on-secondary hover:bg-secondary-container rounded-lg shadow-xs transition-colors cursor-pointer min-h-[36px] items-center hidden xs:inline-flex"
+            >
+              Register
+            </button>
+          </div>
+        )}
       </div>
     </header>
   );

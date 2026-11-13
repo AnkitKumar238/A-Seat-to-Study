@@ -85,10 +85,10 @@ export function DigitalPassModal({ reservation, onClose, onStatusChange }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-primary/70 backdrop-blur-md animate-fadeIn">
-      <div className="w-full max-w-lg bg-surface-container-lowest rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-primary/70 backdrop-blur-md animate-fadeIn">
+      <div className="w-full max-w-lg max-h-[92vh] bg-surface-container-lowest rounded-2xl shadow-2xl overflow-hidden border border-outline-variant/30 flex flex-col">
         {/* Pass Top Banner */}
-        <div className="bg-primary text-on-primary p-space-md flex items-center justify-between">
+        <div className="bg-primary text-on-primary p-space-md flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2">
             <span className="material-symbols-outlined text-secondary-fixed text-[22px]">verified</span>
             <div>
@@ -110,14 +110,14 @@ export function DigitalPassModal({ reservation, onClose, onStatusChange }) {
 
         {/* Success Alert Banner */}
         {successToast && (
-          <div className="bg-tertiary-container text-on-tertiary px-space-md py-2 flex items-center gap-2 text-label-md font-semibold">
+          <div className="bg-tertiary-container text-on-tertiary px-space-md py-2 flex items-center gap-2 text-label-md font-semibold shrink-0">
             <span className="material-symbols-outlined text-[18px]">check_circle</span>
             <span>{successToast}</span>
           </div>
         )}
 
         {/* Pass Body Ticket Layout */}
-        <div className="p-space-lg space-y-space-md">
+        <div className="p-3 sm:p-space-lg space-y-space-md overflow-y-auto">
           {/* Seat Number Hero Display */}
           <div className="p-space-md rounded-xl bg-surface-container-low border border-surface-container flex items-center justify-between">
             <div className="space-y-0.5">

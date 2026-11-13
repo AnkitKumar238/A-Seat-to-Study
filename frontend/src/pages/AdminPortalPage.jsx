@@ -1225,7 +1225,7 @@ export function AdminPortalPage() {
         <div className="rounded-xl bg-surface-container-lowest shadow-sm border border-surface-container-high overflow-hidden flex flex-col">
           {/* Search & Filter Bar */}
           <div className="p-space-md bg-surface-container-low/40 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-space-md border-b border-surface-container">
-            <div className="relative flex-1 min-w-[320px] max-w-2xl">
+            <div className="relative flex-1 w-full min-w-0 max-w-2xl">
               <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-outline text-[20px]">
                 search
               </span>
