@@ -152,10 +152,10 @@ Visitors opening the production URL ([https://a-seat-to-study.vercel.app](https:
 
 ## 🔑 Demo Credentials
 
-| Role | Identifier | Password | Access Scope |
+| Role | User & Identifier | Password | Access Scope |
 | :--- | :--- | :--- | :--- |
-| **Student** | `ankit@lpu.in`<br>*(or ID: `12513583`)* | `StudySanctuary2025#`<br>*(or `password123`)* | Dashboard, Interactive Floor Map, 3-Step Booking Wizard, My Bookings, Digital RFID Pass, Desk Extension |
-| **Admin** | `admin@library.univ.edu`<br>*(or ID: `ADMIN-001`)* | `StudySanctuary2025#`<br>*(or `admin123`)* | Operations Overview, Turnstile Controls, Desk Overrides, Student Strike Waivers, CSV Audit Export |
+| **Student** | **Ankit Singh Rathore**<br>`ankit@lpu.in`<br>*(or ID: `12513583`)* | `StudySanctuary2025#`<br>*(or `password123`)* | Dashboard, Interactive Floor Map, 3-Step Booking Wizard, My Bookings, Digital RFID Pass, Desk Extension |
+| **Admin** | **Ankit Singh Rathore**<br>`admin@library.univ.edu`<br>*(or ID: `ADMIN-001`)* | `StudySanctuary2025#`<br>*(or `admin123`)* | Operations Overview, Turnstile Controls, Desk Overrides, Student Strike Waivers, CSV Audit Export |
 
 *You can also use the **Phase Switcher** located at the bottom of the screen to preview any workflow instantly.*
 

@@ -8,7 +8,7 @@ export const normalizeUser = (user) => {
   if (!user) return null;
   const id = user.id || user._id;
   let userName = user.name;
-  if (!userName || userName === 'Ankit') userName = 'Ankit Singh Rathore';
+  if (!userName || userName === 'Ankit' || userName === 'Dr. Arthur Pendelton') userName = 'Ankit Singh Rathore';
   let avatar = user.avatar_url || user.avatarUrl || '';
   if (!avatar || avatar.includes('googleusercontent')) avatar = '/assets/ankit-singh-rathore.jpg';
   return {

@@ -95,21 +95,19 @@ export function Sidebar({ activeRoute = 'dashboard', onNavigate, isOpen = false,
           {/* User Role Card in Sidebar */}
           <div className="mx-space-md mt-space-sm p-space-xs rounded-lg bg-surface-container-low border border-surface-container flex items-center justify-between">
             <div className="flex items-center gap-2.5 min-w-0">
-              {isAuthenticated && !isAdmin ? (
+              {isAuthenticated ? (
                 <img
                   src={user?.avatarUrl || '/assets/ankit-singh-rathore.jpg'}
                   alt={user?.name || 'Ankit Singh Rathore'}
-                  className="w-7 h-7 rounded-full object-cover border border-secondary/40 shrink-0"
-                />
-              ) : (
-                <div
-                  className={`w-2.5 h-2.5 rounded-full shrink-0 ${
-                    isAdmin ? 'bg-error animate-pulse' : 'bg-outline'
+                  className={`w-7 h-7 rounded-full object-cover border shrink-0 ${
+                    isAdmin ? 'border-primary' : 'border-secondary/40'
                   }`}
                 />
+              ) : (
+                <div className="w-2.5 h-2.5 rounded-full shrink-0 bg-outline" />
               )}
               <span className="font-label-sm text-label-sm font-semibold text-primary truncate max-w-[125px]">
-                {isAdmin ? 'Admin Console' : isAuthenticated ? (user?.name || 'Ankit Singh Rathore') : 'Guest Student'}
+                {isAdmin ? (user?.name || 'Ankit Singh Rathore') : isAuthenticated ? (user?.name || 'Ankit Singh Rathore') : 'Guest Student'}
               </span>
             </div>
             <span

@@ -16,9 +16,9 @@ export function Header({
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const menuRef = useRef(null);
 
-  const studentName = user?.name || 'Ankit Singh Rathore';
-  const studentId = user?.studentId || '12513583';
-  const studentDept = user?.department || 'Lovely Professional University — B.Tech CSE';
+  const studentName = user?.name || (isAdmin ? 'Ankit Singh Rathore (Admin)' : 'Ankit Singh Rathore');
+  const studentId = user?.studentId || (isAdmin ? 'ADMIN-001' : '12513583');
+  const studentDept = user?.department || (isAdmin ? 'LPU Central Library Operations & Administration' : 'Lovely Professional University — B.Tech CSE');
   const quotaHours = user?.weeklyQuotaHours || 25.0;
   const usedHours = user?.usedQuotaHours || 8.5;
 

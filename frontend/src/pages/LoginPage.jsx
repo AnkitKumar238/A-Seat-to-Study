@@ -46,7 +46,7 @@ export const LoginPage = ({ onNavigate, onLoginSuccess }) => {
   const handleDemoAdmin = () => {
     quickDemoLogin('ADMIN');
     if (onLoginSuccess) {
-      onLoginSuccess({ role: 'ADMIN', name: 'Dr. Arthur Pendelton' });
+      onLoginSuccess({ role: 'ADMIN', name: 'Ankit Singh Rathore' });
     } else if (onNavigate) {
       onNavigate('admin');
     }
@@ -430,9 +430,9 @@ export const LoginPage = ({ onNavigate, onLoginSuccess }) => {
                         setPassword('StudySanctuary2025#');
                       }}
                       className="px-2 py-1 bg-surface-container-lowest hover:bg-surface-container-high rounded text-primary font-label-sm text-label-sm border border-outline-variant/40 transition-colors"
-                      title="Load Admin Profile"
+                      title="Load Admin Profile (Ankit Singh Rathore)"
                     >
-                      Admin
+                      Admin (Ankit Singh Rathore)
                     </button>
                   </div>
                 </div>

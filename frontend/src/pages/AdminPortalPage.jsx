@@ -339,27 +339,34 @@ export function AdminPortalPage() {
 
       {/* Admin Top Header Banner Block */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-space-md">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1.5 px-space-sm py-0.5 rounded-full bg-surface-container-high text-on-surface-variant font-label-sm text-label-sm uppercase tracking-wider font-semibold">
-              <span className="w-1.5 h-1.5 rounded-full bg-tertiary-fixed-dim animate-pulse" />
-              Telemetry Grid Active
-            </span>
-            <span className="font-tabular-numeric text-tabular-numeric text-outline text-xs">
-              Node #HL-MAIN-B2
-            </span>
-            {emergencyProtocolActive && (
-              <span className="px-2 py-0.5 rounded-full bg-error text-on-error font-label-sm text-[11px] font-bold animate-pulse">
-                EMERGENCY OVERRIDE ACTIVE (85% CAP)
+        <div className="flex items-center gap-3.5 sm:gap-4">
+          <img
+            src={user?.avatarUrl || '/assets/ankit-singh-rathore.jpg'}
+            alt="Ankit Singh Rathore"
+            className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl object-cover border-2 border-primary/40 shadow-md shrink-0"
+          />
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-space-sm py-0.5 rounded-full bg-surface-container-high text-primary font-label-sm text-label-sm uppercase tracking-wider font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse" />
+                Administrator: {user?.name || 'Ankit Singh Rathore'}
               </span>
-            )}
+              <span className="font-tabular-numeric text-tabular-numeric text-outline text-xs">
+                ID: {user?.studentId || 'ADMIN-001'}
+              </span>
+              {emergencyProtocolActive && (
+                <span className="px-2 py-0.5 rounded-full bg-error text-on-error font-label-sm text-[11px] font-bold animate-pulse">
+                  EMERGENCY OVERRIDE ACTIVE (85% CAP)
+                </span>
+              )}
+            </div>
+            <h1 className="font-headline-lg text-headline-lg text-primary tracking-tight font-bold">
+              Facility Operations &amp; Campus Overview
+            </h1>
+            <p className="font-body-md text-body-md text-on-surface-variant max-w-3xl">
+              Real-time occupancy monitoring, IoT sensor health, turnstile throughput, and daily booking demand across all library zones.
+            </p>
           </div>
-          <h1 className="font-headline-lg text-headline-lg text-primary tracking-tight font-bold">
-            Facility Operations &amp; Campus Overview
-          </h1>
-          <p className="font-body-md text-body-md text-on-surface-variant max-w-3xl">
-            Real-time occupancy monitoring, IoT sensor health, turnstile throughput, and daily booking demand across all library zones.
-          </p>
         </div>
 
         {/* Action Buttons */}

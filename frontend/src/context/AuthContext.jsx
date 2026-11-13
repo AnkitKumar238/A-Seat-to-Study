@@ -9,7 +9,7 @@ export const AuthProvider = ({ children }) => {
       const savedUser = localStorage.getItem('study_user');
       if (savedUser) {
         const parsed = JSON.parse(savedUser);
-        if (parsed.name === 'Ankit') parsed.name = 'Ankit Singh Rathore';
+        if (parsed.name === 'Ankit' || parsed.name === 'Dr. Arthur Pendelton') parsed.name = 'Ankit Singh Rathore';
         if (!parsed.avatarUrl || parsed.avatarUrl.includes('googleusercontent')) {
           parsed.avatarUrl = '/assets/ankit-singh-rathore.jpg';
         }
@@ -115,12 +115,13 @@ export const AuthProvider = ({ children }) => {
     if (role === 'ADMIN') {
       const adminUser = {
         id: 'mock-admin-001',
-        name: 'Dr. Arthur Pendelton',
+        name: 'Ankit Singh Rathore',
         email: 'admin@library.univ.edu',
         studentId: 'ADMIN-001',
+        avatarUrl: '/assets/ankit-singh-rathore.jpg',
         role: 'ADMIN',
         department: 'LPU Central Library Operations & Administration',
-        academicStanding: 'Faculty / Postdoc',
+        academicStanding: 'Chief Library Administrator',
         rfidCardUid: 'RFID-ADMIN-ROOT',
         weeklyQuotaHours: 99.0,
         usedQuotaHours: 0.0,
