@@ -1,10 +1,31 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+// Base API URL configuration with production fallback and normalization
+const rawBaseUrl =
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.PROD
+    ? 'https://a-seat-to-study-api.vercel.app/api'
+    : 'http://localhost:5000/api');
+
+// Strip trailing slashes
+let cleanBaseUrl = rawBaseUrl.trim().replace(/\/+$/, '');
+
+// Ensure /api suffix is present without duplication
+if (!cleanBaseUrl.endsWith('/api')) {
+  cleanBaseUrl = `${cleanBaseUrl}/api`;
+}
+
+export const API_BASE_URL = cleanBaseUrl;
 
 /**
  * Standard HTTP Client wrapper for API communication.
  */
 export async function apiClient(endpoint, options = {}) {
-  const url = `${API_BASE_URL}${endpoint}`;
+  // Ensure single leading slash and strip duplicate /api prefix if passed
+  let cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  if (cleanEndpoint.startsWith('/api/')) {
+    cleanEndpoint = cleanEndpoint.slice(4);
+  }
+
+  const url = `${API_BASE_URL}${cleanEndpoint}`;
   
   // Retrieve auth token if present
   const token = localStorage.getItem('study_token');
