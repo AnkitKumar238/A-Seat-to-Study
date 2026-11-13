@@ -1,23 +1,12 @@
-import mongoose from 'mongoose';
-
 /**
- * Establishes connection to MongoDB Atlas / Local MongoDB instance.
- * Gracefully handles connection failures without abruptly terminating the server.
+ * Database connection handler.
+ *
+ * NOTE: MongoDB connection is temporarily disabled for Vercel deployment
+ * as per architecture decision. Supabase will be integrated in a later phase.
+ * No connection attempts to localhost or Atlas will be made.
  */
 export const connectDB = async () => {
-  const uri = process.env.MONGODB_URI;
-
-  if (!uri) {
-    console.warn('⚠️  MONGODB_URI is not defined in environment variables. Database features will be disabled.');
-    return;
-  }
-
-  try {
-    const conn = await mongoose.connect(uri);
-    console.log(`✅ MongoDB Connected successfully: ${conn.connection.host}`);
-  } catch (error) {
-    console.error(`❌ MongoDB Connection Error: ${error.message}`);
-    console.warn('ℹ️  Ensure your MongoDB Atlas connection string is configured in backend/.env');
-  }
+  // Intentionally disabled — do not attempt MongoDB connection
+  console.log('ℹ️  Database connection is disabled. Running with in-memory data store.');
 };
 

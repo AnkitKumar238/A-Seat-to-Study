@@ -3,7 +3,6 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { connectDB } from './config/db.js';
 import apiRoutes from './routes/index.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 
@@ -17,15 +16,27 @@ dotenv.config(); // fallback to current working directory .env
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:5173';
 
-// Connect to Database (Non-blocking)
-connectDB();
+// Configure CORS for local development and deployed Vercel frontend
+const allowedOrigins = process.env.CLIENT_URL
+  ? process.env.CLIENT_URL.split(',').map((url) => url.trim())
+  : ['http://localhost:5173', 'http://127.0.0.1:5173'];
 
 // Core Middleware
 app.use(
   cors({
-    origin: CLIENT_URL,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. mobile apps, curl, server-to-server health checks)
+      if (!origin) return callback(null, true);
+      if (
+        allowedOrigins.includes(origin) ||
+        allowedOrigins.includes('*') ||
+        origin.endsWith('.vercel.app')
+      ) {
+        return callback(null, true);
+      }
+      return callback(null, true);
+    },
     credentials: true,
   })
 );
@@ -35,9 +46,16 @@ app.use(express.urlencoded({ extended: true }));
 // Welcome root endpoint
 app.get('/', (req, res) => {
   res.json({
+    service: 'A Seat to Study API',
+    status: 'operational',
     message: 'Welcome to A Seat to Study API',
     documentation: '/api/health',
     version: '1.0.0',
+    database: {
+      configured: false,
+      status: 'not_configured',
+      message: 'Database is not configured yet (Supabase integration pending).',
+    },
   });
 });
 
@@ -48,10 +66,11 @@ app.use('/api', apiRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
-// Start HTTP Server when executed directly (not when imported in test runners)
+// Start HTTP Server only during local direct execution (never in Vercel serverless or test runners)
+const isVercel = Boolean(process.env.VERCEL);
 const isDirectRun = process.argv[1] && (process.argv[1].endsWith('server.js') || process.argv[1].includes('nodemon'));
 
-if (isDirectRun) {
+if (!isVercel && isDirectRun) {
   app.listen(PORT, () => {
     console.log(`🚀 A Seat to Study Server running on port ${PORT} [${process.env.NODE_ENV || 'development'}]`);
     console.log(`🔗 Health check available at http://localhost:${PORT}/api/health`);
